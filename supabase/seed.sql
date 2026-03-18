@@ -1,4 +1,4 @@
--- GameRex Seed Data: 107 events (no titles for confidentiality)
+-- GameRex Seed Data: 116 events (no titles for confidentiality)
 -- Subtrilha codes:
 --   T1-1: Aplicações de IA (Geração/Interpretação/Processamento)
 --   T1-2: Chats e Agentes
@@ -18,6 +18,17 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('PLEN-D1', 'plenaria', 1, NULL, '08h-12h', NULL, NULL),
 ('PLEN-D2', 'plenaria', 2, NULL, '08h-12h', NULL, NULL),
 ('PLEN-D3', 'plenaria', 3, NULL, '08h-11h', NULL, NULL),
+
+-- Mini-Expo Stands (3 stands × 3 days = 9)
+('STAND-1-D1', 'stand', 1, 'Stand 1', '13h30-16h30', NULL, NULL),
+('STAND-2-D1', 'stand', 1, 'Stand 2', '13h30-16h30', NULL, NULL),
+('STAND-3-D1', 'stand', 1, 'Stand 3', '13h30-16h30', NULL, NULL),
+('STAND-1-D2', 'stand', 2, 'Stand 1', '13h30-16h30', NULL, NULL),
+('STAND-2-D2', 'stand', 2, 'Stand 2', '13h30-16h30', NULL, NULL),
+('STAND-3-D2', 'stand', 2, 'Stand 3', '13h30-16h30', NULL, NULL),
+('STAND-1-D3', 'stand', 3, 'Stand 1', '13h30-16h30', NULL, NULL),
+('STAND-2-D3', 'stand', 3, 'Stand 2', '13h30-16h30', NULL, NULL),
+('STAND-3-D3', 'stand', 3, 'Stand 3', '13h30-16h30', NULL, NULL),
 
 -- Orais Dia 1 - Auditório
 ('A0004', 'oral', 1, 'Auditório', '14h30-14h55', 'T1', 'T1-2'),

@@ -7,7 +7,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export interface EventRow {
   id: string
-  type: 'oral' | 'poster' | 'plenaria'
+  type: 'oral' | 'poster' | 'plenaria' | 'stand'
   day: number
   room: string | null
   time_slot: string | null

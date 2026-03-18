@@ -9,7 +9,7 @@ export const POINTS_PER_CHECKIN = 10
 // T3-4: HPC/Pipelines      |  T3-5: MLOps
 
 interface EventInfo {
-  type: 'oral' | 'poster' | 'plenaria'
+  type: 'oral' | 'poster' | 'plenaria' | 'stand'
   day: number
   room: string | null
   track_code: string | null
@@ -25,7 +25,7 @@ export interface Mission {
   id: string
   name: string
   description: string
-  category: 'oral' | 'poster' | 'plenaria' | 'networking' | 'trilha' | 'special'
+  category: 'oral' | 'poster' | 'plenaria' | 'stand' | 'networking' | 'trilha' | 'special'
   points: number
   check: (checkins: EventInfo[], friends: FriendInfo[]) => { done: boolean; progress: number; total: number }
 }
@@ -41,6 +41,7 @@ const POSTERS_PER_DAY = 20
 function orals(c: EventInfo[]) { return c.filter(e => e.type === 'oral') }
 function posters(c: EventInfo[]) { return c.filter(e => e.type === 'poster') }
 function plenarias(c: EventInfo[]) { return c.filter(e => e.type === 'plenaria') }
+function stands(c: EventInfo[]) { return c.filter(e => e.type === 'stand') }
 
 function uniqueDays(items: { day: number }[]): Set<number> {
   return new Set(items.map(i => i.day))
@@ -190,6 +191,61 @@ export const MISSIONS: Mission[] = [
     check: (c) => {
       const days = uniqueDays(plenarias(c))
       return { done: days.size >= 3, progress: days.size, total: 3 }
+    },
+  },
+
+  // ─── Mini-Expo (Stands) ───
+  {
+    id: 'visitante_expo',
+    name: 'Visitante da Expo',
+    description: 'Visitar pelo menos 1 stand da Mini-Expo',
+    category: 'stand',
+    points: 20,
+    check: (c) => {
+      const count = stands(c).length
+      return { done: count >= 1, progress: Math.min(count, 1), total: 1 }
+    },
+  },
+  {
+    id: 'tour_completo',
+    name: 'Tour Completo',
+    description: 'Visitar os 3 stands em 1 dia',
+    category: 'stand',
+    points: 40,
+    check: (c) => {
+      for (const day of [1, 2, 3]) {
+        const dayStands = stands(c).filter(e => e.day === day)
+        const rooms = new Set(dayStands.map(e => e.room))
+        if (rooms.size >= 3) return { done: true, progress: 3, total: 3 }
+      }
+      let best = 0
+      for (const day of [1, 2, 3]) {
+        const rooms = new Set(stands(c).filter(e => e.day === day).map(e => e.room))
+        best = Math.max(best, rooms.size)
+      }
+      return { done: false, progress: Math.min(best, 3), total: 3 }
+    },
+  },
+  {
+    id: 'fiel_expo',
+    name: 'Fiel da Expo',
+    description: 'Visitar a Mini-Expo em todos os 3 dias',
+    category: 'stand',
+    points: 40,
+    check: (c) => {
+      const days = uniqueDays(stands(c))
+      return { done: days.size >= 3, progress: days.size, total: 3 }
+    },
+  },
+  {
+    id: 'expert_expo',
+    name: 'Expert da Expo',
+    description: 'Visitar todos os 9 stands (3 por dia)',
+    category: 'stand',
+    points: 80,
+    check: (c) => {
+      const count = stands(c).length
+      return { done: count >= 9, progress: Math.min(count, 9), total: 9 }
     },
   },
 
@@ -356,7 +412,7 @@ export const MISSIONS: Mission[] = [
       for (const day of [1, 2, 3]) {
         const dayCheckins = c.filter(e => e.day === day)
         const types = new Set(dayCheckins.map(e => e.type))
-        const count = ['oral', 'poster', 'plenaria'].filter(t => types.has(t)).length
+        const count = (['oral', 'poster', 'plenaria'] as const).filter(t => types.has(t)).length
         best = Math.max(best, count)
       }
       return { done: false, progress: best, total: 3 }
@@ -421,12 +477,13 @@ export const CATEGORY_LABELS: Record<string, string> = {
   oral: '🎤 Apresentações Orais',
   poster: '🖼️ Posters',
   plenaria: '🎙️ Plenárias',
+  stand: '🏛️ Mini-Expo',
   networking: '🤝 Networking',
   trilha: '🧩 Trilhas',
   special: '🏆 Desafios Especiais',
 }
 
-export const CATEGORY_ORDER = ['oral', 'poster', 'plenaria', 'networking', 'trilha', 'special']
+export const CATEGORY_ORDER = ['oral', 'poster', 'plenaria', 'stand', 'networking', 'trilha', 'special']
 
 export function calculateTotalPoints(
   checkins: { event_id: string }[],

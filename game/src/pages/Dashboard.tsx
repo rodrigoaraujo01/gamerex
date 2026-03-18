@@ -117,7 +117,7 @@ export default function Dashboard() {
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium">{c.event_id}</p>
                       <p className="text-gray-500 text-xs">
-                        {ev?.room ?? (ev?.type === 'poster' ? 'Área de Posters' : 'Plenário')}
+                        {ev?.room ?? (ev?.type === 'poster' ? 'Área de Posters' : ev?.type === 'stand' ? 'Mini-Expo' : 'Plenário')}
                         {ev?.track_code ? ` · ${getTrackLabel(ev.track_code)}` : ''}
                       </p>
                     </div>

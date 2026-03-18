@@ -27,6 +27,7 @@ export function getTypeLabel(type: string): string {
     oral: 'Apresentação Oral',
     poster: 'Poster',
     plenaria: 'Plenária',
+    stand: 'Mini-Expo',
   }
   return labels[type] ?? type
 }
@@ -36,6 +37,7 @@ export function getTypeEmoji(type: string): string {
     oral: '🎤',
     poster: '🖼️',
     plenaria: '🎙️',
+    stand: '🏛️',
   }
   return emojis[type] ?? '📌'
 }

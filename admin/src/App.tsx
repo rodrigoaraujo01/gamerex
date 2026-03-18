@@ -41,6 +41,10 @@ const MISSIONS: MissionDef[] = [
   { id: 'detetive_posters', name: 'Detetive de Posters', points: 50, check: (c) => { for(const d of[1,2,3]) if(c.filter(e=>e.type==='poster'&&e.day===d).length>=10)return true;return false }},
   { id: 'mestre_posters', name: 'Mestre dos Posters', points: 100, check: (c) => { for(const d of[1,2,3]) if(c.filter(e=>e.type==='poster'&&e.day===d).length>=20)return true;return false }},
   { id: 'early_bird', name: 'Early Bird', points: 50, check: (c) => new Set(c.filter(e=>e.type==='plenaria').map(e=>e.day)).size>=3 },
+  { id: 'visitante_expo', name: 'Visitante da Expo', points: 20, check: (c) => c.filter(e=>e.type==='stand').length>=1 },
+  { id: 'tour_completo', name: 'Tour Completo', points: 40, check: (c) => { for(const d of[1,2,3]) if(new Set(c.filter(e=>e.type==='stand'&&e.day===d).map(e=>e.room)).size>=3)return true;return false }},
+  { id: 'fiel_expo', name: 'Fiel da Expo', points: 40, check: (c) => new Set(c.filter(e=>e.type==='stand').map(e=>e.day)).size>=3 },
+  { id: 'expert_expo', name: 'Expert da Expo', points: 80, check: (c) => c.filter(e=>e.type==='stand').length>=9 },
   { id: 'primeiro_contato', name: 'Primeiro Contato', points: 30, check: (_c,f) => new Set(f.map(x=>x.day)).size>=3 },
   { id: 'bff', name: 'BFF', points: 50, check: (_c,f) => {
     const m=new Map<string,Set<number>>(); for(const x of f){if(!m.has(x.friend_id))m.set(x.friend_id,new Set());m.get(x.friend_id)!.add(x.day)} ; for(const s of m.values()) if(s.size>=3)return true;return false
