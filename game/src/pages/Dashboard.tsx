@@ -1,44 +1,46 @@
 import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { MISSIONS, POINTS_PER_CHECKIN, calculateTotalPoints } from '../lib/missions'
-import { getTypeEmoji, getTrackLabel } from '../lib/dayUtils'
+import { POINTS_PER_CHECKIN, getPlayerLevel } from '../lib/missions'
+import { useGameData } from '../lib/useGameData'
+import { getTypeEmoji, getTrackLabel, getCurrentDay } from '../lib/dayUtils'
 import Navbar from '../components/Navbar'
 
 export default function Dashboard() {
-  const { user, checkins, friendCheckins, events, refreshData } = useAuth()
+  const { user, checkins, friendCheckins, refreshData } = useAuth()
+  const {
+    eventInfoMap,
+    totalPoints,
+    completedMissions,
+    uniqueFriends,
+    nextMission,
+  } = useGameData()
 
   useEffect(() => { refreshData() }, [refreshData])
 
-  const eventInfoMap = useMemo(() => {
-    const map = new Map(events.map(e => [e.id, e]))
-    return map
-  }, [events])
+  const level = useMemo(() => getPlayerLevel(totalPoints), [totalPoints])
 
-  const checkinEvents = useMemo(() =>
-    checkins.map(c => eventInfoMap.get(c.event_id)).filter(Boolean),
-    [checkins, eventInfoMap]
-  )
+  const levelProgress = useMemo(() => {
+    if (!level.nextLevel) return 100
+    const range = level.nextLevel.minPoints - level.minPoints
+    const progress = totalPoints - level.minPoints
+    return Math.min(Math.round((progress / range) * 100), 100)
+  }, [totalPoints, level])
 
-  const friendInfos = useMemo(() =>
-    friendCheckins.map(f => ({ friend_id: f.friend_id, day: f.day })),
-    [friendCheckins]
-  )
+  // Day streak: which of the 3 event days the user has activity
+  const dayStreak = useMemo(() => {
+    const activeDays = new Set<number>()
+    for (const c of checkins) {
+      const ev = eventInfoMap.get(c.event_id)
+      if (ev) activeDays.add(ev.day)
+    }
+    for (const f of friendCheckins) {
+      activeDays.add(f.day)
+    }
+    return [1, 2, 3].map(d => activeDays.has(d))
+  }, [checkins, friendCheckins, eventInfoMap])
 
-  const totalPoints = useMemo(() =>
-    calculateTotalPoints(checkins, friendCheckins, checkinEvents as any, friendInfos),
-    [checkins, friendCheckins, checkinEvents, friendInfos]
-  )
-
-  const completedMissions = useMemo(() =>
-    MISSIONS.filter(m => m.check(checkinEvents as any, friendInfos).done).length,
-    [checkinEvents, friendInfos]
-  )
-
-  const uniqueFriends = useMemo(() =>
-    new Set(friendCheckins.map(f => f.friend_id)).size,
-    [friendCheckins]
-  )
+  const currentDay = getCurrentDay()
 
   const recentCheckins = useMemo(() =>
     [...checkins].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5),
@@ -51,18 +53,69 @@ export default function Dashboard() {
     <div className="min-h-dvh pb-20 page-enter">
       {/* Header */}
       <div className="bg-rex-card border-b border-rex-border px-4 py-5">
-        <div className="max-w-lg mx-auto">
-          <p className="text-gray-400 text-sm">Olá,</p>
-          <p className="text-white font-semibold text-lg">{user.name} 🦖</p>
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <div>
+            <p className="text-gray-400 text-sm">Olá,</p>
+            <p className="text-white font-semibold text-lg">{user.name} 🦖</p>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl">{level.emoji}</p>
+            <p className="text-gray-400 text-xs">{level.title}</p>
+          </div>
         </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
-        {/* Points card */}
+        {/* Points card + level progress */}
         <div className="bg-rex-card border border-rex-border rounded-2xl p-5 text-center shimmer">
           <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Pontuação Total</p>
           <p className="font-game text-rex-green text-3xl">{totalPoints}</p>
           <p className="text-gray-500 text-xs mt-1">pts</p>
+          {level.nextLevel && (
+            <div className="mt-3 px-4">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>{level.emoji} {level.title}</span>
+                <span>{level.nextLevel.emoji} {level.nextLevel.title}</span>
+              </div>
+              <div className="level-progress">
+                <div
+                  className="level-progress-fill bg-gradient-to-r from-rex-green/60 to-rex-green"
+                  style={{ width: `${levelProgress}%` }}
+                />
+              </div>
+              <p className="text-gray-600 text-xs mt-1">
+                {level.nextLevel.minPoints - totalPoints} pts para o próximo nível
+              </p>
+            </div>
+          )}
+          {!level.nextLevel && (
+            <p className="text-rex-amber text-xs mt-2">👑 Nível máximo!</p>
+          )}
+        </div>
+
+        {/* Day streak */}
+        <div className="bg-rex-card border border-rex-border rounded-xl p-4">
+          <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">Presença no Evento</p>
+          <div className="flex justify-center gap-4">
+            {[1, 2, 3].map((d, i) => (
+              <div key={d} className="flex flex-col items-center gap-1">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                  dayStreak[i]
+                    ? 'bg-rex-green/20 border-2 border-rex-green'
+                    : d === currentDay
+                      ? 'bg-rex-amber/10 border-2 border-rex-amber/40'
+                      : 'bg-rex-border/30 border-2 border-rex-border'
+                }`}>
+                  {dayStreak[i] ? '✅' : d === currentDay ? '📍' : '⬜'}
+                </div>
+                <span className={`text-xs ${
+                  dayStreak[i] ? 'text-rex-green' : d === currentDay ? 'text-rex-amber' : 'text-gray-600'
+                }`}>
+                  Dia {d}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Stats grid */}
@@ -76,10 +129,34 @@ export default function Dashboard() {
             <p className="text-gray-500 text-xs">Amigos</p>
           </div>
           <div className="bg-rex-card border border-rex-border rounded-xl p-3 text-center">
-            <p className="text-xl font-bold text-rex-amber">{completedMissions}</p>
+            <p className="text-xl font-bold text-rex-amber">{completedMissions.length}</p>
             <p className="text-gray-500 text-xs">Missões</p>
           </div>
         </div>
+
+        {/* Next mission suggestion */}
+        {nextMission && (
+          <Link to="/missions" className="block bg-rex-card border border-rex-amber/30 rounded-xl p-4 hover:border-rex-amber/50 transition-colors">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm">🎯</span>
+              <p className="text-rex-amber text-xs uppercase tracking-wider font-medium">Quase lá!</p>
+            </div>
+            <p className="text-white text-sm font-medium">{nextMission.name}</p>
+            <p className="text-gray-500 text-xs mt-0.5">{nextMission.description}</p>
+            <div className="mt-2">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Progresso</span>
+                <span>{nextMission.result.progress}/{nextMission.result.total}</span>
+              </div>
+              <div className="progress-bar">
+                <div
+                  className="progress-bar-fill bg-rex-amber/60"
+                  style={{ width: `${(nextMission.result.progress / nextMission.result.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          </Link>
+        )}
 
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-3">
@@ -91,11 +168,11 @@ export default function Dashboard() {
             <p className="text-gray-300 text-sm mt-1">Meu QR Code</p>
           </Link>
           <Link
-            to="/missions"
+            to="/ranking"
             className="bg-rex-card border border-rex-border rounded-xl p-4 text-center hover:border-rex-amber/50 transition-colors"
           >
-            <span className="text-2xl">🎯</span>
-            <p className="text-gray-300 text-sm mt-1">Missões</p>
+            <span className="text-2xl">🏆</span>
+            <p className="text-gray-300 text-sm mt-1">Ranking</p>
           </Link>
         </div>
 

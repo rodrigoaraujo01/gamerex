@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase, type UserRow } from '../lib/supabase'
 import { getTypeEmoji, getTypeLabel, getDayLabel, getTrackLabel } from '../lib/dayUtils'
-import { POINTS_PER_CHECKIN, MISSIONS, CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/missions'
+import { POINTS_PER_CHECKIN, CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/missions'
+import { useGameData } from '../lib/useGameData'
 import Navbar from '../components/Navbar'
 
 export default function History() {
-  const { checkins, friendCheckins, events, refreshData } = useAuth()
+  const { checkins, friendCheckins, refreshData } = useAuth()
+  const { eventInfoMap, completedMissions, uniqueFriends } = useGameData()
   const [friendNames, setFriendNames] = useState<Map<string, string>>(new Map())
   const [tab, setTab] = useState<'events' | 'friends' | 'missions'>('events')
 
@@ -28,8 +30,6 @@ export default function History() {
       })
   }, [friendCheckins])
 
-  const eventInfoMap = useMemo(() => new Map(events.map(e => [e.id, e])), [events])
-
   const sortedCheckins = useMemo(() =>
     [...checkins].sort((a, b) => b.created_at.localeCompare(a.created_at)),
     [checkins]
@@ -40,28 +40,13 @@ export default function History() {
     [friendCheckins]
   )
 
-  const checkinEvents = useMemo(() =>
-    checkins.map(c => eventInfoMap.get(c.event_id)).filter(Boolean),
-    [checkins, eventInfoMap]
-  )
-
-  const friendInfos = useMemo(() =>
-    friendCheckins.map(f => ({ friend_id: f.friend_id, day: f.day })),
-    [friendCheckins]
-  )
-
-  const completedMissions = useMemo(() =>
-    MISSIONS.filter(m => m.check(checkinEvents as any, friendInfos).done),
-    [checkinEvents, friendInfos]
-  )
-
   return (
     <div className="min-h-dvh pb-20 page-enter">
       <div className="bg-rex-card border-b border-rex-border px-4 py-4">
         <div className="max-w-lg mx-auto">
           <h1 className="text-white font-semibold text-lg">Histórico</h1>
           <p className="text-gray-500 text-sm">
-            {checkins.length} eventos · {new Set(friendCheckins.map(f => f.friend_id)).size} amigos
+            {checkins.length} eventos · {uniqueFriends} amigos
           </p>
         </div>
       </div>
@@ -87,7 +72,7 @@ export default function History() {
                 : 'text-gray-400 hover:text-gray-300'
             }`}
           >
-            🤝 Amigos ({new Set(friendCheckins.map(f => f.friend_id)).size})
+            🤝 Amigos ({uniqueFriends})
           </button>
           <button
             onClick={() => setTab('missions')}

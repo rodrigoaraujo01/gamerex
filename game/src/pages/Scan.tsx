@@ -5,10 +5,33 @@ import { supabase } from '../lib/supabase'
 import { getCurrentDay, getTypeLabel, getTypeEmoji, getDayLabel } from '../lib/dayUtils'
 import { POINTS_PER_CHECKIN, MISSIONS } from '../lib/missions'
 
+function Confetti() {
+  const particles = Array.from({ length: 24 }, (_, i) => {
+    const colors = ['#4ade80', '#fbbf24', '#a78bfa', '#22d3ee', '#f472b6', '#fb923c']
+    const color = colors[i % colors.length]
+    const left = Math.random() * 100
+    const delay = Math.random() * 0.5
+    const duration = 1.2 + Math.random() * 0.8
+    return (
+      <div
+        key={i}
+        className="confetti-particle"
+        style={{
+          left: `${left}%`,
+          backgroundColor: color,
+          animationDelay: `${delay}s`,
+          animationDuration: `${duration}s`,
+        }}
+      />
+    )
+  })
+  return <div className="confetti-container">{particles}</div>
+}
+
 type ScanState =
   | { status: 'loading' }
   | { status: 'success'; eventId: string; type: string; room: string | null; day: number; newMissions: string[] }
-  | { status: 'friend-success'; friendName: string }
+  | { status: 'friend-success'; friendName: string; newMissions: string[] }
   | { status: 'already-scanned'; eventId: string }
   | { status: 'friend-already'; friendName: string }
   | { status: 'error'; message: string }
@@ -51,7 +74,18 @@ export default function Scan() {
         if (result.already_scanned) {
           setState({ status: 'friend-already', friendName: result.friend_name })
         } else {
-          setState({ status: 'friend-success', friendName: result.friend_name })
+          // Check newly completed missions after friend scan
+          const eventInfos = checkins.map(c => events.find(e => e.id === c.event_id)).filter(Boolean)
+          const oldFriendInfos = friendCheckins.map(f => ({ friend_id: f.friend_id, day: f.day }))
+          const newFriendInfos = [...oldFriendInfos, { friend_id: friendId, day: getCurrentDay() }]
+
+          const newMissions = MISSIONS.filter(m => {
+            const nowDone = m.check(eventInfos as any, newFriendInfos).done
+            const wasDone = m.check(eventInfos as any, oldFriendInfos).done
+            return nowDone && !wasDone
+          }).map(m => m.name)
+
+          setState({ status: 'friend-success', friendName: result.friend_name, newMissions })
         }
       } catch {
         setState({ status: 'error', message: 'Não foi possível registrar o encontro. O QR Code é válido?' })
@@ -131,7 +165,8 @@ export default function Scan() {
 
       {state.status === 'success' && (
         <div className="text-center max-w-sm">
-          <div className="text-6xl mb-4">✅</div>
+          <Confetti />
+          <div className="text-6xl mb-4 scan-bounce">✅</div>
           <h2 className="font-game text-rex-green text-lg mb-2">Checkin!</h2>
           <div className="bg-rex-card border border-rex-green/30 rounded-2xl p-5 mb-4">
             <p className="text-2xl mb-2">{getTypeEmoji(state.type)}</p>
@@ -159,13 +194,24 @@ export default function Scan() {
 
       {state.status === 'friend-success' && (
         <div className="text-center max-w-sm">
-          <div className="text-6xl mb-4">🤝</div>
+          <Confetti />
+          <div className="text-6xl mb-4 scan-bounce">🤝</div>
           <h2 className="font-game text-rex-green text-lg mb-2">Encontro!</h2>
           <div className="bg-rex-card border border-rex-green/30 rounded-2xl p-5 mb-4">
             <p className="text-white font-semibold text-lg">{state.friendName}</p>
             <p className="text-gray-400 text-sm mt-1">Vocês dois ganharam pontos!</p>
             <p className="text-rex-green font-game text-xl mt-3">+{POINTS_PER_CHECKIN} pts</p>
           </div>
+
+          {state.newMissions.length > 0 && (
+            <div className="bg-rex-card border border-rex-amber/30 rounded-2xl p-4 mb-4 toast">
+              <p className="text-rex-amber font-semibold text-sm mb-2">🎉 Missão Concluída!</p>
+              {state.newMissions.map(name => (
+                <p key={name} className="text-white text-sm">{name}</p>
+              ))}
+            </div>
+          )}
+
           <Link to="/dashboard" className="inline-block bg-rex-green text-rex-bg font-semibold rounded-xl py-3 px-8 hover:bg-rex-green-dark transition-colors">
             Voltar
           </Link>

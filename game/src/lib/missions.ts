@@ -473,6 +473,27 @@ export const MISSIONS: Mission[] = [
   },
 ]
 
+// ─── Player Levels ───
+export const LEVELS = [
+  { minPoints: 0, title: 'Novato', emoji: '🥚' },
+  { minPoints: 50, title: 'Iniciante', emoji: '🦎' },
+  { minPoints: 150, title: 'Explorador', emoji: '🦕' },
+  { minPoints: 300, title: 'Veterano', emoji: '🦖' },
+  { minPoints: 500, title: 'Lenda', emoji: '⭐' },
+  { minPoints: 800, title: 'Rex Supremo', emoji: '👑' },
+]
+
+export function getPlayerLevel(points: number) {
+  let level = LEVELS[0]!
+  for (const l of LEVELS) {
+    if (points >= l.minPoints) level = l
+    else break
+  }
+  const idx = LEVELS.indexOf(level)
+  const nextLevel = idx < LEVELS.length - 1 ? LEVELS[idx + 1]! : null
+  return { ...level, nextLevel }
+}
+
 export const CATEGORY_LABELS: Record<string, string> = {
   oral: '🎤 Apresentações Orais',
   poster: '🖼️ Posters',

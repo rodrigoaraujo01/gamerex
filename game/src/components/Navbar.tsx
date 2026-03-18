@@ -4,6 +4,7 @@ const NAV_ITEMS = [
   { to: '/dashboard', icon: '🏠', label: 'Início' },
   { to: '/missions', icon: '🎯', label: 'Missões' },
   { to: '/myqr', icon: '📱', label: 'QR' },
+  { to: '/ranking', icon: '🏆', label: 'Ranking' },
   { to: '/history', icon: '📋', label: 'Histórico' },
 ]
 

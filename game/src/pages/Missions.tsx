@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { MISSIONS, CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/missions'
+import { useGameData, type FriendInfo } from '../lib/useGameData'
+import type { EventRow } from '../lib/supabase'
 import Navbar from '../components/Navbar'
 
 interface StepInfo { label: string; done: boolean }
@@ -16,7 +18,6 @@ const SUB_LABELS: Record<string, string> = {
 }
 
 type EventInfo = { type: string; day: number; room: string | null; track_code: string | null; subtrilha: string | null }
-type FriendInfo = { friend_id: string; day: number }
 
 function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[]): StepInfo[] | null {
   const byType = (t: string) => events.filter(e => e.type === t)
@@ -128,30 +129,18 @@ function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[])
 }
 
 export default function Missions() {
-  const { checkins, friendCheckins, events, refreshData } = useAuth()
+  const { refreshData } = useAuth()
+  const { checkinEvents, friendInfos, missionResults: baseMissionResults } = useGameData()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => { refreshData() }, [refreshData])
 
-  const eventInfoMap = useMemo(() => new Map(events.map(e => [e.id, e])), [events])
-
-  const checkinEvents = useMemo(() =>
-    checkins.map(c => eventInfoMap.get(c.event_id)).filter(Boolean),
-    [checkins, eventInfoMap]
-  )
-
-  const friendInfos = useMemo(() =>
-    friendCheckins.map(f => ({ friend_id: f.friend_id, day: f.day })),
-    [friendCheckins]
-  )
-
   const missionResults = useMemo(() =>
-    MISSIONS.map(m => ({
+    baseMissionResults.map(m => ({
       ...m,
-      result: m.check(checkinEvents as any, friendInfos),
-      steps: getMissionSteps(m.id, checkinEvents as EventInfo[], friendInfos),
+      steps: getMissionSteps(m.id, checkinEvents as EventRow[], friendInfos),
     })),
-    [checkinEvents, friendInfos]
+    [baseMissionResults, checkinEvents, friendInfos]
   )
 
   const grouped = useMemo(() => {

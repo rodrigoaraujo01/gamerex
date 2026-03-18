@@ -45,12 +45,56 @@ body {
   animation: slideUp 0.3s ease-out;
 }
 
-/* Celebration shimmer */
+/* Confetti particles */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 50;
+}
+.confetti-particle {
+  position: absolute;
+  top: -10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* Scan success bounce */
+@keyframes scanBounce {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.15); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.scan-bounce {
+  animation: scanBounce 0.5s ease-out;
+}
+
+/* Level progress bar */
+.level-progress {
+  @apply h-1.5 rounded-full bg-rex-border overflow-hidden;
+}
+.level-progress-fill {
+  @apply h-full rounded-full transition-all duration-700 ease-out;
+}
+
+/* Celebration shimmer — only on shimmer-active */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 .shimmer {
+  background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.08), transparent);
+  background-size: 200% 100%;
+}
+.shimmer-active {
   background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.15), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
