@@ -34,6 +34,8 @@ type ScanState =
   | { status: 'friend-success'; friendName: string; newMissions: string[] }
   | { status: 'already-scanned'; eventId: string }
   | { status: 'friend-already'; friendName: string }
+  | { status: 'wrong-day'; eventId: string; eventDay: number }
+  | { status: 'simultaneous-oral'; eventId: string; conflictId: string; timeSlot: string }
   | { status: 'error'; message: string }
   | { status: 'self-scan' }
 
@@ -100,10 +102,34 @@ export default function Scan() {
       return
     }
 
+    // Rule 3: Check event day matches current day
+    const today = getCurrentDay()
+    if (event.day !== today) {
+      setState({ status: 'wrong-day', eventId: code, eventDay: event.day })
+      return
+    }
+
     // Check duplicate
     if (checkins.some(c => c.event_id === code)) {
       setState({ status: 'already-scanned', eventId: code })
       return
+    }
+
+    // Rule 4: Block simultaneous oral presentations
+    if (event.type === 'oral' && event.time_slot) {
+      const conflict = checkins.find(c => {
+        const ev = events.find(e => e.id === c.event_id)
+        return ev && ev.type === 'oral' && ev.day === event.day && ev.time_slot === event.time_slot
+      })
+      if (conflict) {
+        setState({
+          status: 'simultaneous-oral',
+          eventId: code,
+          conflictId: conflict.event_id,
+          timeSlot: event.time_slot,
+        })
+        return
+      }
     }
 
     try {
@@ -237,6 +263,36 @@ export default function Scan() {
           <h2 className="text-rex-amber font-semibold text-lg mb-2">Já se encontraram hoje</h2>
           <p className="text-gray-400 text-sm mb-4">
             Você e <span className="text-white">{state.friendName}</span> já fizeram checkin hoje!
+          </p>
+          <Link to="/dashboard" className="inline-block border border-rex-border text-gray-300 rounded-xl py-3 px-8 hover:border-rex-green/50 transition-colors">
+            Voltar
+          </Link>
+        </div>
+      )}
+
+      {state.status === 'wrong-day' && (
+        <div className="text-center max-w-sm">
+          <div className="text-6xl mb-4">📅</div>
+          <h2 className="text-rex-amber font-semibold text-lg mb-2">Dia Incorreto</h2>
+          <p className="text-gray-400 text-sm mb-4">
+            O evento <span className="text-white">{state.eventId}</span> é do{' '}
+            <span className="text-rex-amber">{getDayLabel(state.eventDay)}</span>.
+            <br />Checkin só é permitido no dia do evento.
+          </p>
+          <Link to="/dashboard" className="inline-block border border-rex-border text-gray-300 rounded-xl py-3 px-8 hover:border-rex-green/50 transition-colors">
+            Voltar
+          </Link>
+        </div>
+      )}
+
+      {state.status === 'simultaneous-oral' && (
+        <div className="text-center max-w-sm">
+          <div className="text-6xl mb-4">⏰</div>
+          <h2 className="text-rex-amber font-semibold text-lg mb-2">Horário Conflitante</h2>
+          <p className="text-gray-400 text-sm mb-4">
+            Você já fez checkin em <span className="text-white">{state.conflictId}</span> no
+            horário <span className="text-rex-amber">{state.timeSlot}</span>.
+            <br />Não é possível assistir duas orais simultâneas.
           </p>
           <Link to="/dashboard" className="inline-block border border-rex-border text-gray-300 rounded-xl py-3 px-8 hover:border-rex-green/50 transition-colors">
             Voltar
