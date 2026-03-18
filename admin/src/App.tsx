@@ -184,13 +184,16 @@ export default function App() {
     return userIds.size
   })
 
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
+      <header className="bg-white border-b shadow-sm relative">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900">🦖 GameREX Admin</h1>
-          <nav className="flex gap-1">
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1">
             {(['dashboard', 'users', 'checkins', 'ranking'] as Tab[]).map(t => (
               <button
                 key={t}
@@ -202,11 +205,45 @@ export default function App() {
                 {t}
               </button>
             ))}
+            <button onClick={loadData} className="ml-4 text-sm text-blue-600 hover:underline">
+              🔄 Atualizar
+            </button>
           </nav>
-          <button onClick={loadData} className="ml-auto text-sm text-blue-600 hover:underline">
-            🔄 Atualizar
+          {/* Hamburger button (mobile) */}
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            aria-label="Menu"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              {menuOpen
+                ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />}
+            </svg>
           </button>
         </div>
+        {/* Mobile dropdown */}
+        {menuOpen && (
+          <nav className="md:hidden border-t bg-white px-4 py-2 flex flex-col gap-1">
+            {(['dashboard', 'users', 'checkins', 'ranking'] as Tab[]).map(t => (
+              <button
+                key={t}
+                onClick={() => { setTab(t); setMenuOpen(false) }}
+                className={`px-4 py-2 rounded-lg text-sm capitalize text-left ${
+                  tab === t ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+            <button
+              onClick={() => { loadData(); setMenuOpen(false) }}
+              className="px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 rounded-lg text-left"
+            >
+              🔄 Atualizar
+            </button>
+          </nav>
+        )}
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6">
