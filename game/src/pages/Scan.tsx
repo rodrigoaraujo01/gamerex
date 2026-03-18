@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -19,9 +19,12 @@ export default function Scan() {
   const { user, checkins, friendCheckins, events, refreshData } = useAuth()
   const navigate = useNavigate()
   const [state, setState] = useState<ScanState>({ status: 'loading' })
+  const processedRef = useRef(false)
 
   const performCheckin = useCallback(async () => {
     if (!code || !user) return
+    if (processedRef.current) return
+    processedRef.current = true
 
     // Friend scan
     if (code.startsWith('U-')) {
