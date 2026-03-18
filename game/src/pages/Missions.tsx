@@ -1,10 +1,135 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { MISSIONS, CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/missions'
 import Navbar from '../components/Navbar'
 
+interface StepInfo { label: string; done: boolean }
+
+const DAY_LABELS = ['Dia 1 (23/mar)', 'Dia 2 (24/mar)', 'Dia 3 (25/mar)']
+function dayLabel(i: number): string { return DAY_LABELS[i] ?? `Dia ${i + 1}` }
+const SUB_LABELS: Record<string, string> = {
+  'T1-1': 'Aplicações de IA', 'T1-2': 'Chats e Agentes',
+  'T1-3': 'Demos IA', 'T1-4': 'Scientific ML',
+  'T2-1': 'Governança', 'T2-2': 'Arquitetura', 'T2-3': 'Qualidade',
+  'T3-1': 'Gestão Mudança', 'T3-2': 'Gestão Conhecimento',
+  'T3-3': 'IA Responsável', 'T3-4': 'HPC/Pipelines', 'T3-5': 'MLOps',
+}
+
+type EventInfo = { type: string; day: number; room: string | null; track_code: string | null; subtrilha: string | null }
+type FriendInfo = { friend_id: string; day: number }
+
+function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[]): StepInfo[] | null {
+  const byType = (t: string) => events.filter(e => e.type === t)
+
+  switch (id) {
+    case 'turista_salas': {
+      const ROOMS = ['Auditório', 'Sala .DAT', 'Sala .LAS', 'Sala .SEGY']
+      let bestDay = 1, bestCount = 0
+      for (const d of [1, 2, 3]) {
+        const rooms = new Set(byType('oral').filter(e => e.day === d).map(e => e.room).filter(Boolean))
+        if (rooms.size > bestCount) { bestCount = rooms.size; bestDay = d }
+      }
+      return ROOMS.map(r => ({ label: `${r} — ${dayLabel(bestDay - 1)}`, done: byType('oral').some(e => e.day === bestDay && e.room === r) }))
+    }
+    case 'maratonista': {
+      const ROOMS = ['Auditório', 'Sala .DAT', 'Sala .LAS', 'Sala .SEGY']
+      const targets: Record<number, number> = { 1: 4, 2: 5, 3: 2 }
+      let bestRoom = ROOMS[0], bestDay = 1, bestRatio = 0
+      for (const r of ROOMS) for (const d of [1, 2, 3]) {
+        const got = byType('oral').filter(e => e.day === d && e.room === r).length
+        const ratio = got / (targets[d] ?? 1)
+        if (ratio > bestRatio) { bestRatio = ratio; bestRoom = r; bestDay = d }
+      }
+      const target = targets[bestDay] ?? 4
+      const got = byType('oral').filter(e => e.day === bestDay && e.room === bestRoom).length
+      return Array.from({ length: target }, (_, i) => ({ label: `Oral ${i + 1} — ${bestRoom} (${dayLabel(bestDay - 1)})`, done: i < got }))
+    }
+    case 'fiel_orais':
+      return [1, 2, 3].map((d, i) => ({ label: dayLabel(i), done: byType('oral').some(e => e.day === d) }))
+    case 'curioso':
+      return [1, 2, 3].map((d, i) => ({ label: dayLabel(i), done: byType('poster').some(e => e.day === d) }))
+    case 'early_bird':
+      return [1, 2, 3].map((d, i) => ({ label: dayLabel(i), done: byType('plenaria').some(e => e.day === d) }))
+    case 'tour_completo': {
+      const STANDS = ['Stand 1', 'Stand 2', 'Stand 3']
+      let bestDay = 1, bestCount = 0
+      for (const d of [1, 2, 3]) {
+        const rooms = new Set(byType('stand').filter(e => e.day === d).map(e => e.room))
+        if (rooms.size > bestCount) { bestCount = rooms.size; bestDay = d }
+      }
+      return STANDS.map(s => ({ label: `${s} — ${dayLabel(bestDay - 1)}`, done: byType('stand').some(e => e.day === bestDay && e.room === s) }))
+    }
+    case 'fiel_expo':
+      return [1, 2, 3].map((d, i) => ({ label: dayLabel(i), done: byType('stand').some(e => e.day === d) }))
+    case 'expert_expo':
+      return [1, 2, 3].flatMap((d, i) =>
+        ['Stand 1', 'Stand 2', 'Stand 3'].map(s => ({ label: `${s} — ${dayLabel(i)}`, done: byType('stand').some(e => e.day === d && e.room === s) }))
+      )
+    case 'primeiro_contato':
+      return [1, 2, 3].map((d, i) => ({ label: dayLabel(i), done: friends.some(f => f.day === d) }))
+    case 'bff': {
+      const friendDays = new Map<string, Set<number>>()
+      for (const fc of friends) {
+        if (!friendDays.has(fc.friend_id)) friendDays.set(fc.friend_id, new Set())
+        friendDays.get(fc.friend_id)!.add(fc.day)
+      }
+      let bestSize = 0
+      for (const days of friendDays.values()) bestSize = Math.max(bestSize, days.size)
+      return [1, 2, 3].map((d, i) => {
+        let met = false
+        for (const [, days] of friendDays) { if (days.size === bestSize && days.has(d)) { met = true; break } }
+        return { label: dayLabel(i), done: met }
+      })
+    }
+    case 'super_conector':
+      return [1, 2, 3].map((d, i) => {
+        const count = new Set(friends.filter(fc => fc.day === d).map(fc => fc.friend_id)).size
+        return { label: `${dayLabel(i)} — ${count}/5 amigos`, done: count >= 5 }
+      })
+    case 'ecletico':
+      return [
+        { label: 'Trilha 1 — IA', done: events.some(e => e.track_code === 'T1') },
+        { label: 'Trilha 2 — Dados', done: events.some(e => e.track_code === 'T2') },
+        { label: 'Trilha 3 — Gestão', done: events.some(e => e.track_code === 'T3') },
+      ]
+    case 'guru_ia': {
+      const subs = new Set(events.filter(e => e.subtrilha?.startsWith('T1')).map(e => e.subtrilha))
+      return ['T1-1', 'T1-2', 'T1-3', 'T1-4'].map(s => ({ label: SUB_LABELS[s]!, done: subs.has(s) }))
+    }
+    case 'mestre_dados': {
+      const subs = new Set(events.filter(e => e.subtrilha?.startsWith('T2')).map(e => e.subtrilha))
+      return ['T2-1', 'T2-2', 'T2-3'].map(s => ({ label: SUB_LABELS[s]!, done: subs.has(s) }))
+    }
+    case 'transversal': {
+      const subs = new Set(events.filter(e => e.subtrilha?.startsWith('T3')).map(e => e.subtrilha))
+      return ['T3-1', 'T3-2', 'T3-3', 'T3-4', 'T3-5'].map(s => ({ label: SUB_LABELS[s]!, done: subs.has(s) }))
+    }
+    case 'combo_dia': {
+      let bestDay = 1, bestCount = 0
+      for (const d of [1, 2, 3]) {
+        const types = new Set(events.filter(e => e.day === d).map(e => e.type))
+        const count = ['oral', 'poster', 'plenaria'].filter(t => types.has(t)).length
+        if (count > bestCount) { bestCount = count; bestDay = d }
+      }
+      const bestTypes = new Set(events.filter(e => e.day === bestDay).map(e => e.type))
+      return [
+        { label: `🎤 Oral — ${dayLabel(bestDay - 1)}`, done: bestTypes.has('oral') },
+        { label: `🖼️ Poster — ${dayLabel(bestDay - 1)}`, done: bestTypes.has('poster') },
+        { label: `🎙️ Plenária — ${dayLabel(bestDay - 1)}`, done: bestTypes.has('plenaria') },
+      ]
+    }
+    case 'presenca_vip': {
+      const allDays = new Set([...events.map(e => e.day), ...friends.map(f => f.day)])
+      return [1, 2, 3].map((d, i) => ({ label: dayLabel(i), done: allDays.has(d) }))
+    }
+    default:
+      return null
+  }
+}
+
 export default function Missions() {
   const { checkins, friendCheckins, events, refreshData } = useAuth()
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => { refreshData() }, [refreshData])
 
@@ -24,6 +149,7 @@ export default function Missions() {
     MISSIONS.map(m => ({
       ...m,
       result: m.check(checkinEvents as any, friendInfos),
+      steps: getMissionSteps(m.id, checkinEvents as EventInfo[], friendInfos),
     })),
     [checkinEvents, friendInfos]
   )
@@ -59,14 +185,16 @@ export default function Missions() {
               <div className="space-y-2">
                 {missions.map(m => {
                   const pct = m.result.total > 0 ? (m.result.progress / m.result.total) * 100 : 0
+                  const isExpanded = expandedId === m.id
+                  const hasSteps = m.steps !== null
+
                   return (
                     <div
                       key={m.id}
                       className={`bg-rex-card border rounded-xl p-4 transition-colors ${
-                        m.result.done
-                          ? 'border-rex-green/40'
-                          : 'border-rex-border'
-                      }`}
+                        m.result.done ? 'border-rex-green/40' : 'border-rex-border'
+                      } ${hasSteps ? 'cursor-pointer active:bg-white/5' : ''}`}
+                      onClick={() => hasSteps && setExpandedId(isExpanded ? null : m.id)}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
@@ -78,11 +206,18 @@ export default function Missions() {
                           </div>
                           <p className="text-gray-500 text-xs mt-0.5">{m.description}</p>
                         </div>
-                        <span className={`text-sm font-semibold whitespace-nowrap ${
-                          m.result.done ? 'text-rex-green' : 'text-rex-amber'
-                        }`}>
-                          {m.points} pts
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-semibold whitespace-nowrap ${
+                            m.result.done ? 'text-rex-green' : 'text-rex-amber'
+                          }`}>
+                            {m.points} pts
+                          </span>
+                          {hasSteps && (
+                            <span className={`text-gray-500 text-xs transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                              ▾
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {!m.result.done && (
@@ -97,6 +232,21 @@ export default function Missions() {
                               style={{ width: `${pct}%` }}
                             />
                           </div>
+                        </div>
+                      )}
+
+                      {isExpanded && m.steps && (
+                        <div className="mt-3 pt-3 border-t border-rex-border/50 space-y-1.5">
+                          {m.steps.map((step, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <span className={`text-xs ${step.done ? 'text-rex-green' : 'text-gray-600'}`}>
+                                {step.done ? '●' : '○'}
+                              </span>
+                              <span className={`text-xs ${step.done ? 'text-gray-300' : 'text-gray-500'}`}>
+                                {step.label}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
