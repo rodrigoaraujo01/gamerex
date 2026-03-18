@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase, type UserRow } from '../lib/supabase'
 import { getTypeEmoji, getTypeLabel, getDayLabel, getTrackLabel } from '../lib/dayUtils'
-import { POINTS_PER_CHECKIN } from '../lib/missions'
+import { POINTS_PER_CHECKIN, MISSIONS, CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/missions'
 import Navbar from '../components/Navbar'
 
 export default function History() {
   const { checkins, friendCheckins, events, refreshData } = useAuth()
   const [friendNames, setFriendNames] = useState<Map<string, string>>(new Map())
-  const [tab, setTab] = useState<'events' | 'friends'>('events')
+  const [tab, setTab] = useState<'events' | 'friends' | 'missions'>('events')
 
   useEffect(() => { refreshData() }, [refreshData])
 
@@ -38,6 +38,21 @@ export default function History() {
   const sortedFriends = useMemo(() =>
     [...friendCheckins].sort((a, b) => b.created_at.localeCompare(a.created_at)),
     [friendCheckins]
+  )
+
+  const checkinEvents = useMemo(() =>
+    checkins.map(c => eventInfoMap.get(c.event_id)).filter(Boolean),
+    [checkins, eventInfoMap]
+  )
+
+  const friendInfos = useMemo(() =>
+    friendCheckins.map(f => ({ friend_id: f.friend_id, day: f.day })),
+    [friendCheckins]
+  )
+
+  const completedMissions = useMemo(() =>
+    MISSIONS.filter(m => m.check(checkinEvents as any, friendInfos).done),
+    [checkinEvents, friendInfos]
   )
 
   return (
@@ -73,6 +88,16 @@ export default function History() {
             }`}
           >
             🤝 Amigos ({new Set(friendCheckins.map(f => f.friend_id)).size})
+          </button>
+          <button
+            onClick={() => setTab('missions')}
+            className={`flex-1 py-2 text-sm rounded-lg transition-colors ${
+              tab === 'missions'
+                ? 'bg-rex-green/20 text-rex-green'
+                : 'text-gray-400 hover:text-gray-300'
+            }`}
+          >
+            🎯 Missões ({completedMissions.length})
           </button>
         </div>
       </div>
@@ -126,6 +151,36 @@ export default function History() {
                 </div>
               )
             })
+          )
+        )}
+
+        {tab === 'missions' && (
+          completedMissions.length === 0 ? (
+            <p className="text-gray-500 text-sm text-center py-8">Nenhuma missão concluída ainda</p>
+          ) : (
+            <>
+              {CATEGORY_ORDER.map(cat => {
+                const catMissions = completedMissions.filter(m => m.category === cat)
+                if (catMissions.length === 0) return null
+                return (
+                  <div key={cat} className="mb-4">
+                    <p className="text-gray-400 text-xs font-medium mb-2">{CATEGORY_LABELS[cat]}</p>
+                    <div className="space-y-2">
+                      {catMissions.map(m => (
+                        <div key={m.id} className="bg-rex-card border border-rex-green/30 rounded-xl px-4 py-3 flex items-center gap-3">
+                          <span className="text-lg">✅</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-rex-green text-sm font-medium">{m.name}</p>
+                            <p className="text-gray-500 text-xs">{m.description}</p>
+                          </div>
+                          <span className="text-rex-amber text-sm font-semibold">+{m.points}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </>
           )
         )}
       </div>
