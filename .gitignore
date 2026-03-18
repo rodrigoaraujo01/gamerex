@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+petrobras-ca-root.pem
+agenda_oral.csv
+agenda_poster.csv
+agendatrabalhosSIDARE.xlsx
+Trabalhos.xlsxZone.Identifier
+qrcodegen/
