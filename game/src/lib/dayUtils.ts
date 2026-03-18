@@ -39,3 +39,13 @@ export function getTypeEmoji(type: string): string {
   }
   return emojis[type] ?? '📌'
 }
+
+export function getTrackLabel(trackCode: string | null): string | null {
+  if (!trackCode) return null
+  const labels: Record<string, string> = {
+    T1: 'Trilha 1 — IA',
+    T2: 'Trilha 2 — Dados',
+    T3: 'Trilha 3 — Gestão',
+  }
+  return labels[trackCode] ?? trackCode
+}

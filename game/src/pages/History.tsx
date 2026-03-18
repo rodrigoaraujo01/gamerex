@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase, type UserRow } from '../lib/supabase'
-import { getTypeEmoji, getTypeLabel, getDayLabel } from '../lib/dayUtils'
+import { getTypeEmoji, getTypeLabel, getDayLabel, getTrackLabel } from '../lib/dayUtils'
 import { POINTS_PER_CHECKIN } from '../lib/missions'
 import Navbar from '../components/Navbar'
 
@@ -91,7 +91,7 @@ export default function History() {
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-medium">{c.event_id}</p>
                     <p className="text-gray-500 text-xs">
-                      {ev ? `${getTypeLabel(ev.type)} · ${ev.room ?? 'Plenário'} · ${getDayLabel(ev.day)}` : ''}
+                      {ev ? `${getTypeLabel(ev.type)} · ${ev.room ?? 'Plenário'} · ${getDayLabel(ev.day)}${ev.track_code ? ` · ${getTrackLabel(ev.track_code)}` : ''}` : ''}
                     </p>
                   </div>
                   <div className="text-right">

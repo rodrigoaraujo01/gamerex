@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { MISSIONS, POINTS_PER_CHECKIN, calculateTotalPoints } from '../lib/missions'
-import { getTypeEmoji } from '../lib/dayUtils'
+import { getTypeEmoji, getTrackLabel } from '../lib/dayUtils'
 import Navbar from '../components/Navbar'
 
 export default function Dashboard() {
@@ -109,6 +109,8 @@ export default function Dashboard() {
             <div className="space-y-2">
               {recentCheckins.map(c => {
                 const ev = eventInfoMap.get(c.event_id)
+                const time = new Date(c.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                const date = new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
                 return (
                   <div key={c.id} className="bg-rex-card border border-rex-border rounded-xl px-4 py-3 flex items-center gap-3">
                     <span className="text-lg">{ev ? getTypeEmoji(ev.type) : '📌'}</span>
@@ -116,9 +118,13 @@ export default function Dashboard() {
                       <p className="text-white text-sm font-medium">{c.event_id}</p>
                       <p className="text-gray-500 text-xs">
                         {ev?.room ?? (ev?.type === 'poster' ? 'Área de Posters' : 'Plenário')}
+                        {ev?.track_code ? ` · ${getTrackLabel(ev.track_code)}` : ''}
                       </p>
                     </div>
-                    <span className="text-rex-green text-sm font-medium">+{POINTS_PER_CHECKIN}</span>
+                    <div className="text-right">
+                      <p className="text-rex-green text-sm font-medium">+{POINTS_PER_CHECKIN}</p>
+                      <p className="text-gray-600 text-xs">{date} {time}</p>
+                    </div>
                   </div>
                 )
               })}
