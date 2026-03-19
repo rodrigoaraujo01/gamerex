@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { POINTS_PER_CHECKIN, getPlayerLevel } from '../lib/missions'
 import { useGameData } from '../lib/useGameData'
-import { getTypeEmoji, getTrackLabel, getCurrentDay } from '../lib/dayUtils'
+import { getTypeEmoji, getTrackLabel } from '../lib/dayUtils'
 import Navbar from '../components/Navbar'
 
 export default function Dashboard() {
@@ -26,21 +26,6 @@ export default function Dashboard() {
     const progress = totalPoints - level.minPoints
     return Math.min(Math.round((progress / range) * 100), 100)
   }, [totalPoints, level])
-
-  // Day streak: which of the 3 event days the user has activity
-  const dayStreak = useMemo(() => {
-    const activeDays = new Set<number>()
-    for (const c of checkins) {
-      const ev = eventInfoMap.get(c.event_id)
-      if (ev) activeDays.add(ev.day)
-    }
-    for (const f of friendCheckins) {
-      activeDays.add(f.day)
-    }
-    return [1, 2, 3].map(d => activeDays.has(d))
-  }, [checkins, friendCheckins, eventInfoMap])
-
-  const currentDay = getCurrentDay()
 
   const recentCheckins = useMemo(() =>
     [...checkins].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5),
@@ -91,31 +76,6 @@ export default function Dashboard() {
           {!level.nextLevel && (
             <p className="text-rex-amber text-xs mt-2">👑 Nível máximo!</p>
           )}
-        </div>
-
-        {/* Day streak */}
-        <div className="bg-rex-card border border-rex-border rounded-xl p-4">
-          <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">Presença no Evento</p>
-          <div className="flex justify-center gap-4">
-            {[1, 2, 3].map((d, i) => (
-              <div key={d} className="flex flex-col items-center gap-1">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
-                  dayStreak[i]
-                    ? 'bg-rex-green/20 border-2 border-rex-green'
-                    : d === currentDay
-                      ? 'bg-rex-amber/10 border-2 border-rex-amber/40'
-                      : 'bg-rex-border/30 border-2 border-rex-border'
-                }`}>
-                  {dayStreak[i] ? '✅' : d === currentDay ? '📍' : '⬜'}
-                </div>
-                <span className={`text-xs ${
-                  dayStreak[i] ? 'text-rex-green' : d === currentDay ? 'text-rex-amber' : 'text-gray-600'
-                }`}>
-                  Dia {d}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Stats grid */}
