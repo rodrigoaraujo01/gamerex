@@ -9,7 +9,8 @@ export const POINTS_PER_CHECKIN = 10
 // T3-4: HPC/Pipelines      |  T3-5: MLOps
 
 interface EventInfo {
-  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour'
+  id: string
+  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink'
   day: number
   room: string | null
   track_code: string | null
@@ -60,6 +61,7 @@ function plenarias(c: EventInfo[]) { return c.filter(e => e.type === 'plenaria')
 function stands(c: EventInfo[]) { return c.filter(e => e.type === 'stand') }
 function sirrs(c: EventInfo[]) { return c.filter(e => e.type === 'sirr') }
 function happyhours(c: EventInfo[]) { return c.filter(e => e.type === 'happyhour') }
+function geolinks(c: EventInfo[]) { return c.filter(e => e.type === 'geolink') }
 
 function uniqueDays(items: { day: number }[]): Set<number> {
   return new Set(items.map(i => i.day))
@@ -420,6 +422,34 @@ export const MISSIONS: Mission[] = [
     check: (c) => {
       const count = sirrs(c).length
       return { done: count >= 4, progress: Math.min(count, 4), total: 4 }
+    },
+  },
+
+  // ─── GeoLink ───
+  {
+    id: 'geolinker',
+    name: 'GeoLinker',
+    description: 'Descubra como publicar um protótipo no GeoLink',
+    category: 'stand',
+    points: 100,
+    check: (c) => {
+      const gl = geolinks(c)
+      const ids = new Set(gl.map(e => e.id))
+      const count = ['GL1', 'GL2', 'GL3'].filter(id => ids.has(id)).length
+      return { done: count >= 3, progress: count, total: 3 }
+    },
+  },
+  {
+    id: 'explorador_geolink',
+    name: 'Explorador de Soluções do GeoLink',
+    description: 'Explore as soluções publicadas no GeoLink',
+    category: 'stand',
+    points: 100,
+    check: (c) => {
+      const gl = geolinks(c)
+      const ids = new Set(gl.map(e => e.id))
+      const count = ['GL4', 'GL5', 'GL6', 'GL7'].filter(id => ids.has(id)).length
+      return { done: count >= 4, progress: count, total: 4 }
     },
   },
 

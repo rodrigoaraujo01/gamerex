@@ -52,6 +52,8 @@ const MISSIONS: MissionDef[] = [
   { id: 'fiel_expo', name: 'Fiel da Expo', points: 40, check: (c) => new Set(c.filter(e=>e.type==='stand').map(e=>e.day)).size>=3 },
   { id: 'expert_expo', name: 'Expert da Expo', points: 80, check: (c) => c.filter(e=>e.type==='stand').length>=9 },
   { id: 'sirr_expert', name: 'SIRR Expert', points: 100, check: (c) => c.filter(e=>e.type==='sirr').length>=4 },
+  { id: 'geolinker', name: 'GeoLinker', points: 100, check: (c) => { const ids=new Set(c.filter(e=>e.type==='geolink').map(e=>e.id)); return['GL1','GL2','GL3'].every(id=>ids.has(id)) }},
+  { id: 'explorador_geolink', name: 'Explorador de Soluções do GeoLink', points: 100, check: (c) => { const ids=new Set(c.filter(e=>e.type==='geolink').map(e=>e.id)); return['GL4','GL5','GL6','GL7'].every(id=>ids.has(id)) }},
   { id: 'happy_hour', name: 'Do Dado ao Barril', points: 50, check: (c) => c.filter(e=>e.type==='happyhour').length>=1 },
   { id: 'lideres_supremas', name: 'Líderes Supremas', points: 100, check: (_c,f,coordIds) => {
     if(!coordIds || coordIds.size===0) return false

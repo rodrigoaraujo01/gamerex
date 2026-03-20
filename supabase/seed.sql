@@ -170,5 +170,14 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('SIRR3', 'sirr', 1, NULL, NULL, NULL, NULL),
 ('SIRR4', 'sirr', 1, NULL, NULL, NULL, NULL),
 
+-- GeoLink Activities (available all days)
+('GL1', 'geolink', 1, NULL, NULL, NULL, NULL),
+('GL2', 'geolink', 1, NULL, NULL, NULL, NULL),
+('GL3', 'geolink', 1, NULL, NULL, NULL, NULL),
+('GL4', 'geolink', 1, NULL, NULL, NULL, NULL),
+('GL5', 'geolink', 1, NULL, NULL, NULL, NULL),
+('GL6', 'geolink', 1, NULL, NULL, NULL, NULL),
+('GL7', 'geolink', 1, NULL, NULL, NULL, NULL),
+
 -- Happy Hour
 ('HH1', 'happyhour', 1, NULL, NULL, NULL, NULL);
