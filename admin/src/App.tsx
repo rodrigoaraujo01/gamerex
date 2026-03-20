@@ -45,6 +45,7 @@ const MISSIONS: MissionDef[] = [
   { id: 'tour_completo', name: 'Tour Completo', points: 40, check: (c) => { for(const d of[1,2,3]) if(new Set(c.filter(e=>e.type==='stand'&&e.day===d).map(e=>e.room)).size>=3)return true;return false }},
   { id: 'fiel_expo', name: 'Fiel da Expo', points: 40, check: (c) => new Set(c.filter(e=>e.type==='stand').map(e=>e.day)).size>=3 },
   { id: 'expert_expo', name: 'Expert da Expo', points: 80, check: (c) => c.filter(e=>e.type==='stand').length>=9 },
+  { id: 'sirr_expert', name: 'SIRR Expert', points: 50, check: (c) => c.filter(e=>e.type==='sirr').length>=4 },
   { id: 'primeiro_contato', name: 'Primeiro Contato', points: 30, check: (_c,f) => new Set(f.map(x=>x.day)).size>=3 },
   { id: 'bff', name: 'BFF', points: 50, check: (_c,f) => {
     const m=new Map<string,Set<number>>(); for(const x of f){if(!m.has(x.friend_id))m.set(x.friend_id,new Set());m.get(x.friend_id)!.add(x.day)} ; for(const s of m.values()) if(s.size>=3)return true;return false
@@ -189,6 +190,22 @@ export default function App() {
   })
 
   const [menuOpen, setMenuOpen] = useState(false)
+  const [resetting, setResetting] = useState(false)
+
+  const resetCheckins = async () => {
+    if (!window.confirm('⚠️ Tem certeza? Isso vai apagar TODOS os checkins e encontros de amigos de todos os usuários.')) return
+    if (!window.confirm('⚠️ Segunda confirmação: esta ação é IRREVERSÍVEL. Continuar?')) return
+    setResetting(true)
+    try {
+      await supabase.from('friend_checkins').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      await supabase.from('checkins').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      await loadData()
+    } catch (e) {
+      alert('Erro ao resetar checkins: ' + (e as Error).message)
+    } finally {
+      setResetting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -275,6 +292,16 @@ export default function App() {
                       </div>
                     ))}
                   </div>
+                </div>
+                <div className="pt-4 border-t">
+                  <button
+                    onClick={resetCheckins}
+                    disabled={resetting}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {resetting ? '⏳ Resetando...' : '🗑️ Resetar Todos os Checkins'}
+                  </button>
+                  <p className="text-xs text-gray-400 mt-1">Remove todos os checkins de eventos e amigos. Usuários são mantidos.</p>
                 </div>
               </div>
             )}

@@ -28,6 +28,7 @@ export function getTypeLabel(type: string): string {
     poster: 'Poster',
     plenaria: 'Plenária',
     stand: 'Mini-Expo',
+    sirr: 'SIRR Web',
   }
   return labels[type] ?? type
 }
@@ -38,6 +39,7 @@ export function getTypeEmoji(type: string): string {
     poster: '🖼️',
     plenaria: '🎙️',
     stand: '🏛️',
+    sirr: '💻',
   }
   return emojis[type] ?? '📌'
 }

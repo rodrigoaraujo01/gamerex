@@ -2,10 +2,17 @@ node_modules/
 dist/
 .env
 .env.local
+
+# AI context files
+claude.md
+
+# Confidential / sensitive files
 petrobras-ca-root.pem
+agenda_plenarias.md
 agenda_oral.csv
 agenda_poster.csv
 agendatrabalhosSIDARE.xlsx
 Trabalhos.xlsxZone.Identifier
+
+# QRCodeGen contains titles (local only)
 qrcodegen/
-agenda_plenarias.md

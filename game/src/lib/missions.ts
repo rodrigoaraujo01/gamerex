@@ -9,7 +9,7 @@ export const POINTS_PER_CHECKIN = 10
 // T3-4: HPC/Pipelines      |  T3-5: MLOps
 
 interface EventInfo {
-  type: 'oral' | 'poster' | 'plenaria' | 'stand'
+  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr'
   day: number
   room: string | null
   track_code: string | null
@@ -25,7 +25,7 @@ export interface Mission {
   id: string
   name: string
   description: string
-  category: 'oral' | 'poster' | 'plenaria' | 'stand' | 'networking' | 'trilha' | 'special'
+  category: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'networking' | 'trilha' | 'special'
   points: number
   check: (checkins: EventInfo[], friends: FriendInfo[]) => { done: boolean; progress: number; total: number }
 }
@@ -42,6 +42,7 @@ function orals(c: EventInfo[]) { return c.filter(e => e.type === 'oral') }
 function posters(c: EventInfo[]) { return c.filter(e => e.type === 'poster') }
 function plenarias(c: EventInfo[]) { return c.filter(e => e.type === 'plenaria') }
 function stands(c: EventInfo[]) { return c.filter(e => e.type === 'stand') }
+function sirrs(c: EventInfo[]) { return c.filter(e => e.type === 'sirr') }
 
 function uniqueDays(items: { day: number }[]): Set<number> {
   return new Set(items.map(i => i.day))
@@ -392,6 +393,19 @@ export const MISSIONS: Mission[] = [
     },
   },
 
+  // ─── SIRR Web ───
+  {
+    id: 'sirr_expert',
+    name: 'SIRR Expert',
+    description: 'Faça as atividades de descoberta do SIRR Web',
+    category: 'sirr',
+    points: 50,
+    check: (c) => {
+      const count = sirrs(c).length
+      return { done: count >= 4, progress: Math.min(count, 4), total: 4 }
+    },
+  },
+
   // ─── Desafios Especiais ───
   {
     id: 'combo_dia',
@@ -499,12 +513,13 @@ export const CATEGORY_LABELS: Record<string, string> = {
   poster: '🖼️ Posters',
   plenaria: '🎙️ Plenárias',
   stand: '🏛️ Mini-Expo',
+  sirr: '💻 SIRR Web',
   networking: '🤝 Networking',
   trilha: '🧩 Trilhas',
   special: '🏆 Desafios Especiais',
 }
 
-export const CATEGORY_ORDER = ['oral', 'poster', 'plenaria', 'stand', 'networking', 'trilha', 'special']
+export const CATEGORY_ORDER = ['oral', 'poster', 'plenaria', 'stand', 'sirr', 'networking', 'trilha', 'special']
 
 export function calculateTotalPoints(
   checkins: { event_id: string }[],

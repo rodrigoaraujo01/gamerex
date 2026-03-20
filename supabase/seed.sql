@@ -162,4 +162,10 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('P0051', 'poster', 3, NULL, '13h30-14h30', 'T2', 'T2-2'),
 ('P0003', 'poster', 3, NULL, '13h30-14h30', 'T1', 'T1-1'),
 ('P0021', 'poster', 3, NULL, '13h30-14h30', 'T1', 'T1-1'),
-('P0037', 'poster', 3, NULL, '13h30-14h30', 'T2', 'T2-2');
+('P0037', 'poster', 3, NULL, '13h30-14h30', 'T2', 'T2-2'),
+
+-- SIRR Web Discovery Activities (available all days)
+('SIRR1', 'sirr', 1, NULL, NULL, NULL, NULL),
+('SIRR2', 'sirr', 1, NULL, NULL, NULL, NULL),
+('SIRR3', 'sirr', 1, NULL, NULL, NULL, NULL),
+('SIRR4', 'sirr', 1, NULL, NULL, NULL, NULL);
