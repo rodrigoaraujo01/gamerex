@@ -134,6 +134,23 @@ function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[],
         { label: 'Produtividade com SIRR Web', done: ids.has('SIRR4') },
       ]
     }
+    case 'geolinker': {
+      const ids = new Set(byType('geolink').map(e => e.id))
+      return [
+        { label: 'Confira a Documentação do GeoLink', done: ids.has('GL1') },
+        { label: 'Veja o exemplo de demonstração oficial', done: ids.has('GL2') },
+        { label: 'Descubra como monitorar sua solução', done: ids.has('GL3') },
+      ]
+    }
+    case 'explorador_geolink': {
+      const ids = new Set(byType('geolink').map(e => e.id))
+      return [
+        { label: 'Descubra o Hub de Soluções do GeoLink', done: ids.has('GL4') },
+        { label: 'Classificação de Cavings com IA ou Petrofísica', done: ids.has('GL5') },
+        { label: 'Explorador de Dados do OSDU ou Situação Operacional de Poços', done: ids.has('GL6') },
+        { label: 'Multipoços com EletroAI ou Detector de Círculos de Fadas', done: ids.has('GL7') },
+      ]
+    }
     case 'lideres_supremas': {
       if (!coordinators || coordinators.length === 0) return null
       const metIds = new Set(friends.map(f => f.friend_id))
