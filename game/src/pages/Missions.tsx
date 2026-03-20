@@ -229,7 +229,7 @@ export default function Missions() {
 
       {/* Category summary cards */}
       <div className="max-w-lg mx-auto px-4 pt-4">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="grid grid-cols-4 gap-2">
           {CATEGORY_ORDER.map(cat => {
             const missions = grouped.get(cat)
             if (!missions || missions.length === 0) return null
@@ -239,11 +239,11 @@ export default function Missions() {
               <button
                 key={cat}
                 onClick={() => scrollToSection(cat)}
-                className={`flex-shrink-0 bg-rex-card border rounded-xl px-3 py-2 text-center transition-colors ${
-                  allDone ? 'border-rex-green/50' : 'border-rex-border hover:border-rex-green/30'
+                className={`bg-rex-card border rounded-xl px-2 py-2 text-center transition-colors ${
+                  allDone ? 'border-rex-amber' : 'border-rex-border hover:border-rex-green/30'
                 }`}
               >
-                <p className={`text-sm font-bold ${allDone ? 'text-rex-green' : 'text-white'}`}>{done}/{missions.length}</p>
+                <p className={`text-sm font-bold ${allDone ? 'text-rex-amber' : 'text-white'}`}>{done}/{missions.length}</p>
                 <p className="text-gray-500 text-xs whitespace-nowrap">{CATEGORY_SHORT[cat]}</p>
               </button>
             )
