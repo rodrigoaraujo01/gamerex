@@ -25,7 +25,7 @@ export interface Mission {
   id: string
   name: string
   description: string
-  category: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'networking' | 'trilha' | 'special'
+  category: 'oral' | 'poster' | 'plenaria' | 'stand' | 'networking' | 'trilha' | 'special'
   points: number
   check: (checkins: EventInfo[], friends: FriendInfo[]) => { done: boolean; progress: number; total: number }
 }
@@ -398,7 +398,7 @@ export const MISSIONS: Mission[] = [
     id: 'sirr_expert',
     name: 'SIRR Expert',
     description: 'Faça as atividades de descoberta do SIRR Web',
-    category: 'sirr',
+    category: 'stand',
     points: 100,
     check: (c) => {
       const count = sirrs(c).length
@@ -513,13 +513,12 @@ export const CATEGORY_LABELS: Record<string, string> = {
   poster: '🖼️ Posters',
   plenaria: '🎙️ Plenárias',
   stand: '🏛️ Mini-Expo',
-  sirr: '💻 SIRR Web',
   networking: '🤝 Networking',
   trilha: '🧩 Trilhas',
   special: '🏆 Desafios Especiais',
 }
 
-export const CATEGORY_ORDER = ['oral', 'poster', 'plenaria', 'stand', 'sirr', 'networking', 'trilha', 'special']
+export const CATEGORY_ORDER = ['oral', 'poster', 'plenaria', 'stand', 'networking', 'trilha', 'special']
 
 export function calculateTotalPoints(
   checkins: { event_id: string }[],

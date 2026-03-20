@@ -17,7 +17,7 @@ const SUB_LABELS: Record<string, string> = {
   'T3-3': 'IA Responsável', 'T3-4': 'HPC/Pipelines', 'T3-5': 'MLOps',
 }
 
-type EventInfo = { type: string; day: number; room: string | null; track_code: string | null; subtrilha: string | null }
+type EventInfo = { id: string; type: string; day: number; room: string | null; track_code: string | null; subtrilha: string | null }
 
 function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[]): StepInfo[] | null {
   const byType = (t: string) => events.filter(e => e.type === t)
@@ -122,6 +122,15 @@ function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[])
     case 'presenca_vip': {
       const allDays = new Set([...events.map(e => e.day), ...friends.map(f => f.day)])
       return [1, 2, 3].map((d, i) => ({ label: dayLabel(i), done: allDays.has(d) }))
+    }
+    case 'sirr_expert': {
+      const ids = new Set(byType('sirr').map(e => e.id))
+      return [
+        { label: 'Quem é você no SIRR Web', done: ids.has('SIRR1') },
+        { label: 'Buscando dados no SIRR Web', done: ids.has('SIRR2') },
+        { label: 'Encontrando o que eu preciso no SIRR Web', done: ids.has('SIRR3') },
+        { label: 'Produtividade com SIRR Web', done: ids.has('SIRR4') },
+      ]
     }
     default:
       return null
