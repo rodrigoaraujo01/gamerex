@@ -192,6 +192,28 @@ export default function App() {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [userSort, setUserSort] = useState<{ col: 'name' | 'email' | 'created_at' | 'totalPoints'; dir: 'asc' | 'desc' }>({ col: 'totalPoints', dir: 'desc' })
+
+  const sortedUsers = useMemo(() => {
+    const sorted = [...ranking]
+    sorted.sort((a, b) => {
+      let cmp = 0
+      switch (userSort.col) {
+        case 'name': cmp = a.name.localeCompare(b.name, 'pt-BR'); break
+        case 'email': cmp = a.email.localeCompare(b.email); break
+        case 'created_at': cmp = a.created_at.localeCompare(b.created_at); break
+        case 'totalPoints': cmp = a.totalPoints - b.totalPoints; break
+      }
+      return userSort.dir === 'asc' ? cmp : -cmp
+    })
+    return sorted
+  }, [ranking, userSort])
+
+  const toggleUserSort = (col: typeof userSort.col) => {
+    setUserSort(prev => prev.col === col ? { col, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: col === 'name' || col === 'email' ? 'asc' : 'desc' })
+  }
+
+  const sortIcon = (col: typeof userSort.col) => userSort.col === col ? (userSort.dir === 'asc' ? ' ▲' : ' ▼') : ''
 
   const resetCheckins = async () => {
     if (!window.confirm('⚠️ Tem certeza? Isso vai apagar TODOS os checkins e encontros de amigos de todos os usuários.')) return
@@ -313,14 +335,14 @@ export default function App() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-left">
                     <tr>
-                      <th className="px-4 py-3 font-medium text-gray-600">Nome</th>
-                      <th className="px-4 py-3 font-medium text-gray-600">Email</th>
-                      <th className="px-4 py-3 font-medium text-gray-600">Cadastro</th>
-                      <th className="px-4 py-3 font-medium text-gray-600 text-right">Pontos</th>
+                      <th className="px-4 py-3 font-medium text-gray-600 cursor-pointer select-none hover:text-blue-600" onClick={() => toggleUserSort('name')}>Nome{sortIcon('name')}</th>
+                      <th className="px-4 py-3 font-medium text-gray-600 cursor-pointer select-none hover:text-blue-600" onClick={() => toggleUserSort('email')}>Email{sortIcon('email')}</th>
+                      <th className="px-4 py-3 font-medium text-gray-600 cursor-pointer select-none hover:text-blue-600" onClick={() => toggleUserSort('created_at')}>Cadastro{sortIcon('created_at')}</th>
+                      <th className="px-4 py-3 font-medium text-gray-600 text-right cursor-pointer select-none hover:text-blue-600" onClick={() => toggleUserSort('totalPoints')}>Pontos{sortIcon('totalPoints')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {ranking.map(u => (
+                    {sortedUsers.map(u => (
                       <tr key={u.id} className="hover:bg-gray-50">
                         <td className="px-4 py-2 font-medium">{u.name}</td>
                         <td className="px-4 py-2 text-gray-500">{u.email}</td>

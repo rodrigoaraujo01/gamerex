@@ -13,7 +13,9 @@ export default function Rules() {
             onClick={() => navigate(-1)}
             className="text-gray-400 hover:text-white transition-colors"
           >
-            ←
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
           <div>
             <h1 className="text-white font-semibold text-lg">Como Jogar</h1>
