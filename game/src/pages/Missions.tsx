@@ -151,6 +151,14 @@ function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[],
         { label: 'Multipoços com EletroAI ou Detector de Círculos de Fadas', done: ids.has('GL7') },
       ]
     }
+    case 'cacando_dado': {
+      const ids = new Set(byType('dado').map(e => e.id))
+      return [
+        { label: 'Encontre o dado de rocha que você precisa', done: ids.has('CD1') },
+        { label: 'Consulte se as análises estão públicas para uso externo', done: ids.has('CD2') },
+        { label: 'Veja o que a Petrobras tem comprado de outras empresas', done: ids.has('CD3') },
+      ]
+    }
     case 'lideres_supremas': {
       if (!coordinators || coordinators.length === 0) return null
       const metIds = new Set(friends.map(f => f.friend_id))

@@ -10,7 +10,7 @@ export const POINTS_PER_CHECKIN = 10
 
 interface EventInfo {
   id: string
-  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink'
+  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink' | 'dado'
   day: number
   room: string | null
   track_code: string | null
@@ -62,6 +62,7 @@ function stands(c: EventInfo[]) { return c.filter(e => e.type === 'stand') }
 function sirrs(c: EventInfo[]) { return c.filter(e => e.type === 'sirr') }
 function happyhours(c: EventInfo[]) { return c.filter(e => e.type === 'happyhour') }
 function geolinks(c: EventInfo[]) { return c.filter(e => e.type === 'geolink') }
+function dados(c: EventInfo[]) { return c.filter(e => e.type === 'dado') }
 
 function uniqueDays(items: { day: number }[]): Set<number> {
   return new Set(items.map(i => i.day))
@@ -450,6 +451,21 @@ export const MISSIONS: Mission[] = [
       const ids = new Set(gl.map(e => e.id))
       const count = ['GL4', 'GL5', 'GL6', 'GL7'].filter(id => ids.has(id)).length
       return { done: count >= 4, progress: count, total: 4 }
+    },
+  },
+
+  // ─── Caçando o Dado ───
+  {
+    id: 'cacando_dado',
+    name: 'Caçando o Dado',
+    description: 'Use as aplicações e encontre o dado de rocha e fluido',
+    category: 'stand',
+    points: 100,
+    check: (c) => {
+      const d = dados(c)
+      const ids = new Set(d.map(e => e.id))
+      const count = ['CD1', 'CD2', 'CD3'].filter(id => ids.has(id)).length
+      return { done: count >= 3, progress: count, total: 3 }
     },
   },
 

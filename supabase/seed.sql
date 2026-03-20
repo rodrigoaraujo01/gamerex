@@ -179,5 +179,10 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('GL6', 'geolink', 1, NULL, NULL, NULL, NULL),
 ('GL7', 'geolink', 1, NULL, NULL, NULL, NULL),
 
+-- Caçando o Dado Activities (available all days)
+('CD1', 'dado', 1, NULL, NULL, NULL, NULL),
+('CD2', 'dado', 1, NULL, NULL, NULL, NULL),
+('CD3', 'dado', 1, NULL, NULL, NULL, NULL),
+
 -- Happy Hour
 ('HH1', 'happyhour', 1, NULL, NULL, NULL, NULL);
