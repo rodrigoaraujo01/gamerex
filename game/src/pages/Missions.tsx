@@ -267,8 +267,8 @@ export default function Missions() {
                           </div>
                           <div className="progress-bar">
                             <div
-                              className="progress-bar-fill bg-rex-green/60"
-                              style={{ width: `${pct}%` }}
+                              className="progress-bar-fill"
+                              style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #4ade80 0%, #fbbf24 100%)' }}
                             />
                           </div>
                         </div>
