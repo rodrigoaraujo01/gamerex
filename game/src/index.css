@@ -6,6 +6,11 @@
   box-sizing: border-box;
 }
 
+/* Safe area support for standalone PWA (iPhone home indicator, etc.) */
+.pb-nav-safe {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;

@@ -41,7 +41,7 @@ export default function History() {
   )
 
   return (
-    <div className="min-h-dvh pb-20 page-enter">
+    <div className="min-h-dvh pb-nav-safe page-enter">
       <div className="bg-rex-card border-b border-rex-border px-4 py-4">
         <div className="max-w-lg mx-auto">
           <h1 className="text-white font-semibold text-lg">Histórico</h1>

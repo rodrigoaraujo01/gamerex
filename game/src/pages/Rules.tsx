@@ -6,7 +6,7 @@ export default function Rules() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-dvh pb-20 page-enter">
+    <div className="min-h-dvh pb-nav-safe page-enter">
       <div className="bg-rex-card border-b border-rex-border px-4 py-4">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <button

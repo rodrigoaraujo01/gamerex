@@ -10,7 +10,7 @@ const NAV_ITEMS = [
 
 export default function Navbar() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-rex-card border-t border-rex-border">
+    <nav className="fixed bottom-0 left-0 right-0 bg-rex-card border-t border-rex-border pb-[env(safe-area-inset-bottom,0px)]">
       <div className="max-w-lg mx-auto flex">
         {NAV_ITEMS.map(item => (
           <NavLink
