@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase, type UserRow } from '../lib/supabase'
 import { getTypeEmoji, getTypeLabel, getDayLabel, getTrackLabel } from '../lib/dayUtils'
@@ -6,11 +7,16 @@ import { POINTS_PER_CHECKIN, CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/miss
 import { useGameData } from '../lib/useGameData'
 import Navbar from '../components/Navbar'
 
+type TabType = 'events' | 'friends' | 'missions'
+const VALID_TABS: TabType[] = ['events', 'friends', 'missions']
+
 export default function History() {
   const { checkins, friendCheckins, refreshData } = useAuth()
   const { eventInfoMap, completedMissions, uniqueFriends } = useGameData()
   const [friendNames, setFriendNames] = useState<Map<string, string>>(new Map())
-  const [tab, setTab] = useState<'events' | 'friends' | 'missions'>('events')
+  const [searchParams] = useSearchParams()
+  const initialTab = VALID_TABS.includes(searchParams.get('tab') as TabType) ? (searchParams.get('tab') as TabType) : 'events'
+  const [tab, setTab] = useState<TabType>(initialTab)
 
   useEffect(() => { refreshData() }, [refreshData])
 

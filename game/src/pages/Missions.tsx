@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { MISSIONS, CATEGORY_LABELS, CATEGORY_ORDER, COORDINATOR_EMAILS } from '../lib/missions'
 import { useGameData, type FriendInfo } from '../lib/useGameData'
@@ -172,6 +172,7 @@ export default function Missions() {
   const { checkinEvents, friendInfos, missionResults: baseMissionResults } = useGameData()
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [coordinators, setCoordinators] = useState<CoordinatorInfo[]>([])
+  const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   useEffect(() => { refreshData() }, [refreshData])
 
@@ -203,6 +204,20 @@ export default function Missions() {
 
   const completedCount = missionResults.filter(m => m.result.done).length
 
+  const CATEGORY_SHORT: Record<string, string> = {
+    oral: 'Orais',
+    poster: 'Posters',
+    plenaria: 'Plenárias',
+    stand: 'Expo',
+    networking: 'Social',
+    trilha: 'Trilhas',
+    special: 'Especiais',
+  }
+
+  const scrollToSection = (cat: string) => {
+    sectionRefs.current.get(cat)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <div className="min-h-dvh pb-nav-safe page-enter">
       <div className="bg-rex-card border-b border-rex-border px-4 py-4 pt-safe">
@@ -212,12 +227,36 @@ export default function Missions() {
         </div>
       </div>
 
+      {/* Category summary cards */}
+      <div className="max-w-lg mx-auto px-4 pt-4">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {CATEGORY_ORDER.map(cat => {
+            const missions = grouped.get(cat)
+            if (!missions || missions.length === 0) return null
+            const done = missions.filter(m => m.result.done).length
+            const allDone = done === missions.length
+            return (
+              <button
+                key={cat}
+                onClick={() => scrollToSection(cat)}
+                className={`flex-shrink-0 bg-rex-card border rounded-xl px-3 py-2 text-center transition-colors ${
+                  allDone ? 'border-rex-green/50' : 'border-rex-border hover:border-rex-green/30'
+                }`}
+              >
+                <p className={`text-sm font-bold ${allDone ? 'text-rex-green' : 'text-white'}`}>{done}/{missions.length}</p>
+                <p className="text-gray-500 text-xs whitespace-nowrap">{CATEGORY_SHORT[cat]}</p>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <div className="max-w-lg mx-auto px-4 py-4 space-y-6">
         {CATEGORY_ORDER.map(cat => {
           const missions = grouped.get(cat)
           if (!missions || missions.length === 0) return null
           return (
-            <div key={cat}>
+            <div key={cat} ref={el => { if (el) sectionRefs.current.set(cat, el) }}>
               <h2 className="text-gray-300 font-medium text-sm mb-3">
                 {CATEGORY_LABELS[cat]}
               </h2>
