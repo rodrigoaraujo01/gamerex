@@ -168,4 +168,7 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('SIRR1', 'sirr', 1, NULL, NULL, NULL, NULL),
 ('SIRR2', 'sirr', 1, NULL, NULL, NULL, NULL),
 ('SIRR3', 'sirr', 1, NULL, NULL, NULL, NULL),
-('SIRR4', 'sirr', 1, NULL, NULL, NULL, NULL);
+('SIRR4', 'sirr', 1, NULL, NULL, NULL, NULL),
+
+-- Happy Hour
+('HH1', 'happyhour', 1, NULL, NULL, NULL, NULL);

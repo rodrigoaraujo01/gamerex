@@ -29,6 +29,7 @@ export function getTypeLabel(type: string): string {
     plenaria: 'Plenária',
     stand: 'Mini-Expo',
     sirr: 'SIRR Web',
+    happyhour: 'Happy Hour',
   }
   return labels[type] ?? type
 }
@@ -40,6 +41,7 @@ export function getTypeEmoji(type: string): string {
     plenaria: '🎙️',
     stand: '🏛️',
     sirr: '💻',
+    happyhour: '🍻',
   }
   return emojis[type] ?? '📌'
 }

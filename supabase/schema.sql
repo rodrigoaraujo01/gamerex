@@ -4,7 +4,7 @@
 -- Events table (pre-populated, no titles for confidentiality)
 CREATE TABLE events (
   id TEXT PRIMARY KEY,
-  type TEXT NOT NULL CHECK (type IN ('oral', 'poster', 'plenaria', 'stand', 'sirr')),
+  type TEXT NOT NULL CHECK (type IN ('oral', 'poster', 'plenaria', 'stand', 'sirr', 'happyhour')),
   day INT NOT NULL CHECK (day BETWEEN 1 AND 3),
   room TEXT,
   time_slot TEXT,
@@ -130,3 +130,13 @@ CREATE POLICY "Anyone can create checkins"
 -- Friend checkins: anyone can read
 CREATE POLICY "Friend checkins are viewable by everyone"
   ON friend_checkins FOR SELECT USING (true);
+
+-- RPC: Admin reset all checkins (SECURITY DEFINER to bypass RLS)
+CREATE OR REPLACE FUNCTION admin_reset_checkins()
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  DELETE FROM friend_checkins;
+  DELETE FROM checkins;
+END;
+$$;

@@ -46,6 +46,7 @@ const MISSIONS: MissionDef[] = [
   { id: 'fiel_expo', name: 'Fiel da Expo', points: 40, check: (c) => new Set(c.filter(e=>e.type==='stand').map(e=>e.day)).size>=3 },
   { id: 'expert_expo', name: 'Expert da Expo', points: 80, check: (c) => c.filter(e=>e.type==='stand').length>=9 },
   { id: 'sirr_expert', name: 'SIRR Expert', points: 100, check: (c) => c.filter(e=>e.type==='sirr').length>=4 },
+  { id: 'happy_hour', name: 'Do Dado ao Barril', points: 50, check: (c) => c.filter(e=>e.type==='happyhour').length>=1 },
   { id: 'primeiro_contato', name: 'Primeiro Contato', points: 30, check: (_c,f) => new Set(f.map(x=>x.day)).size>=3 },
   { id: 'bff', name: 'BFF', points: 50, check: (_c,f) => {
     const m=new Map<string,Set<number>>(); for(const x of f){if(!m.has(x.friend_id))m.set(x.friend_id,new Set());m.get(x.friend_id)!.add(x.day)} ; for(const s of m.values()) if(s.size>=3)return true;return false
@@ -197,8 +198,8 @@ export default function App() {
     if (!window.confirm('⚠️ Segunda confirmação: esta ação é IRREVERSÍVEL. Continuar?')) return
     setResetting(true)
     try {
-      await supabase.from('friend_checkins').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-      await supabase.from('checkins').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      const { error } = await supabase.rpc('admin_reset_checkins')
+      if (error) throw error
       await loadData()
     } catch (e) {
       alert('Erro ao resetar checkins: ' + (e as Error).message)

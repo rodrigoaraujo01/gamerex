@@ -9,7 +9,7 @@ export const POINTS_PER_CHECKIN = 10
 // T3-4: HPC/Pipelines      |  T3-5: MLOps
 
 interface EventInfo {
-  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr'
+  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour'
   day: number
   room: string | null
   track_code: string | null
@@ -43,6 +43,7 @@ function posters(c: EventInfo[]) { return c.filter(e => e.type === 'poster') }
 function plenarias(c: EventInfo[]) { return c.filter(e => e.type === 'plenaria') }
 function stands(c: EventInfo[]) { return c.filter(e => e.type === 'stand') }
 function sirrs(c: EventInfo[]) { return c.filter(e => e.type === 'sirr') }
+function happyhours(c: EventInfo[]) { return c.filter(e => e.type === 'happyhour') }
 
 function uniqueDays(items: { day: number }[]): Set<number> {
   return new Set(items.map(i => i.day))
@@ -403,6 +404,19 @@ export const MISSIONS: Mission[] = [
     check: (c) => {
       const count = sirrs(c).length
       return { done: count >= 4, progress: Math.min(count, 4), total: 4 }
+    },
+  },
+
+  // ─── Happy Hour ───
+  {
+    id: 'happy_hour',
+    name: 'Do Dado ao Barril',
+    description: 'Participar do Happy Hour SIDARE',
+    category: 'special',
+    points: 50,
+    check: (c) => {
+      const count = happyhours(c).length
+      return { done: count >= 1, progress: Math.min(count, 1), total: 1 }
     },
   },
 

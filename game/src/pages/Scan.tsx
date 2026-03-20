@@ -102,9 +102,9 @@ export default function Scan() {
       return
     }
 
-    // Rule 3: Check event day matches current day (skip for SIRR — available all days)
+    // Rule 3: Check event day matches current day (skip for SIRR/HH — available all days)
     const today = getCurrentDay()
-    if (event.type !== 'sirr' && event.day !== today) {
+    if (event.type !== 'sirr' && event.type !== 'happyhour' && event.day !== today) {
       setState({ status: 'wrong-day', eventId: code, eventDay: event.day })
       return
     }
