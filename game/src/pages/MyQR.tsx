@@ -13,7 +13,7 @@ export default function MyQR() {
 
   return (
     <div className="min-h-dvh pb-nav-safe page-enter">
-      <div className="bg-rex-card border-b border-rex-border px-4 py-4">
+      <div className="bg-rex-card border-b border-rex-border px-4 py-4 pt-safe">
         <div className="max-w-lg mx-auto">
           <h1 className="text-white font-semibold text-lg">Meu QR Code</h1>
           <p className="text-gray-500 text-sm">Peça a um colega para escanear!</p>

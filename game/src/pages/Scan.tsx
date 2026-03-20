@@ -181,7 +181,7 @@ export default function Scan() {
   }, [user, code, navigate, performCheckin])
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-4 page-enter">
+    <div className="min-h-dvh flex flex-col items-center justify-center px-4 page-enter pt-safe">
       {state.status === 'loading' && (
         <div className="text-center">
           <div className="text-5xl mb-4 animate-bounce">🦖</div>

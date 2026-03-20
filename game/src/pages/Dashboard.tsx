@@ -37,7 +37,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-dvh pb-nav-safe page-enter">
       {/* Header */}
-      <div className="bg-rex-card border-b border-rex-border px-4 py-5">
+      <div className="bg-rex-card border-b border-rex-border px-4 py-5 pt-safe">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div>
             <p className="text-white font-semibold text-lg">{user.name}</p>

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export default function Landing() {
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-4 text-center page-enter">
+    <div className="min-h-dvh flex flex-col items-center justify-center px-4 text-center page-enter pt-safe">
       {/* Rex mascot */}
       <div className="text-8xl mb-4 drop-shadow-lg" aria-hidden>🦖</div>
 

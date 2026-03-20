@@ -42,7 +42,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-4 page-enter">
+    <div className="min-h-dvh flex flex-col items-center justify-center px-4 page-enter pt-safe">
       <div className="text-5xl mb-4">🦖</div>
       <h2 className="font-game text-rex-green text-base mb-6">
         {isLogin ? 'Entrar' : 'Cadastro'}

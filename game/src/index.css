@@ -6,7 +6,10 @@
   box-sizing: border-box;
 }
 
-/* Safe area support for standalone PWA (iPhone home indicator, etc.) */
+/* Safe area support for standalone PWA (iPhone notch, home indicator, etc.) */
+.pt-safe {
+  padding-top: max(1.25rem, env(safe-area-inset-top, 0px));
+}
 .pb-nav-safe {
   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
