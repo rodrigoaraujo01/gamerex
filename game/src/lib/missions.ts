@@ -21,13 +21,29 @@ interface FriendInfo {
   day: number
 }
 
+export interface MissionContext {
+  coordinatorIds?: Set<string>
+}
+
 export interface Mission {
   id: string
   name: string
   description: string
   category: 'oral' | 'poster' | 'plenaria' | 'stand' | 'networking' | 'trilha' | 'special'
   points: number
-  check: (checkins: EventInfo[], friends: FriendInfo[]) => { done: boolean; progress: number; total: number }
+  check: (checkins: EventInfo[], friends: FriendInfo[], ctx?: MissionContext) => { done: boolean; progress: number; total: number }
+}
+
+export const COORDINATOR_EMAILS = [
+  'samya.pinheiro@petrobras.com.br',
+  'danyella.carvalho@petrobras.com.br',
+  'carolcaetano@petrobras.com.br',
+]
+
+const COORDINATOR_NAMES: Record<string, string> = {
+  'samya.pinheiro@petrobras.com.br': 'Samya',
+  'danyella.carvalho@petrobras.com.br': 'Danyella',
+  'carolcaetano@petrobras.com.br': 'Caroline',
 }
 
 const ROOMS = ['Auditório', 'Sala .DAT', 'Sala .LAS', 'Sala .SEGY']
@@ -422,6 +438,22 @@ export const MISSIONS: Mission[] = [
 
   // ─── Desafios Especiais ───
   {
+    id: 'lideres_supremas',
+    name: 'Líderes Supremas',
+    description: 'Encontrar as 3 coordenadoras gerais do SIDARE 2026',
+    category: 'special',
+    points: 100,
+    check: (_c, f, ctx) => {
+      if (!ctx?.coordinatorIds || ctx.coordinatorIds.size === 0) return { done: false, progress: 0, total: 3 }
+      const met = new Set<string>()
+      for (const fc of f) {
+        if (ctx.coordinatorIds.has(fc.friend_id)) met.add(fc.friend_id)
+      }
+      const count = met.size
+      return { done: count >= 3, progress: Math.min(count, 3), total: 3 }
+    },
+  },
+  {
     id: 'combo_dia',
     name: 'Combo do Dia',
     description: 'Fazer checkin em oral + poster + plenária no mesmo dia',
@@ -480,9 +512,9 @@ export const MISSIONS: Mission[] = [
     description: 'Completar pelo menos 10 missões',
     category: 'special',
     points: 150,
-    check: (c, f) => {
+    check: (c, f, ctx) => {
       const completed = MISSIONS.filter(
-        m => m.id !== 'completista' && m.id !== 'rex_supremo' && m.check(c, f).done
+        m => m.id !== 'completista' && m.id !== 'rex_supremo' && m.check(c, f, ctx).done
       ).length
       return { done: completed >= 10, progress: Math.min(completed, 10), total: 10 }
     },
@@ -493,9 +525,9 @@ export const MISSIONS: Mission[] = [
     description: 'Completar todas as outras missões',
     category: 'special',
     points: 300,
-    check: (c, f) => {
+    check: (c, f, ctx) => {
       const others = MISSIONS.filter(m => m.id !== 'rex_supremo')
-      const completed = others.filter(m => m.check(c, f).done).length
+      const completed = others.filter(m => m.check(c, f, ctx).done).length
       return { done: completed >= others.length, progress: completed, total: others.length }
     },
   },
@@ -538,12 +570,13 @@ export function calculateTotalPoints(
   checkins: { event_id: string }[],
   friendCheckins: { friend_id: string; day: number }[],
   events: EventInfo[],
-  allFriends: FriendInfo[]
+  allFriends: FriendInfo[],
+  ctx?: MissionContext
 ): number {
   const basePoints = checkins.length * POINTS_PER_CHECKIN
   const friendPoints = new Set(friendCheckins.map(f => `${f.friend_id}-${f.day}`)).size * POINTS_PER_CHECKIN
   const missionBonus = MISSIONS.reduce((sum, m) => {
-    return sum + (m.check(events, allFriends).done ? m.points : 0)
+    return sum + (m.check(events, allFriends, ctx).done ? m.points : 0)
   }, 0)
   return basePoints + friendPoints + missionBonus
 }

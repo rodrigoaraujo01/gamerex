@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/auth'
-import { MISSIONS, CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/missions'
+import { MISSIONS, CATEGORY_LABELS, CATEGORY_ORDER, COORDINATOR_EMAILS } from '../lib/missions'
 import { useGameData, type FriendInfo } from '../lib/useGameData'
-import type { EventRow } from '../lib/supabase'
+import { supabase, type EventRow } from '../lib/supabase'
 import Navbar from '../components/Navbar'
 
 interface StepInfo { label: string; done: boolean }
@@ -19,7 +19,9 @@ const SUB_LABELS: Record<string, string> = {
 
 type EventInfo = { id: string; type: string; day: number; room: string | null; track_code: string | null; subtrilha: string | null }
 
-function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[]): StepInfo[] | null {
+interface CoordinatorInfo { id: string; name: string }
+
+function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[], coordinators?: CoordinatorInfo[]): StepInfo[] | null {
   const byType = (t: string) => events.filter(e => e.type === t)
 
   switch (id) {
@@ -132,24 +134,46 @@ function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[])
         { label: 'Produtividade com SIRR Web', done: ids.has('SIRR4') },
       ]
     }
+    case 'lideres_supremas': {
+      if (!coordinators || coordinators.length === 0) return null
+      const metIds = new Set(friends.map(f => f.friend_id))
+      return coordinators.map(c => ({ label: `Encontrar ${c.name}`, done: metIds.has(c.id) }))
+    }
     default:
       return null
   }
+}
+
+const COORD_NAMES: Record<string, string> = {
+  'samya.pinheiro@petrobras.com.br': 'Samya',
+  'danyella.carvalho@petrobras.com.br': 'Danyella',
+  'carolcaetano@petrobras.com.br': 'Caroline',
 }
 
 export default function Missions() {
   const { refreshData } = useAuth()
   const { checkinEvents, friendInfos, missionResults: baseMissionResults } = useGameData()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [coordinators, setCoordinators] = useState<CoordinatorInfo[]>([])
 
   useEffect(() => { refreshData() }, [refreshData])
+
+  useEffect(() => {
+    supabase
+      .from('users')
+      .select('id, email')
+      .in('email', COORDINATOR_EMAILS)
+      .then(({ data }) => {
+        if (data) setCoordinators(data.map((u: { id: string; email: string }) => ({ id: u.id, name: COORD_NAMES[u.email] ?? u.email })))
+      })
+  }, [])
 
   const missionResults = useMemo(() =>
     baseMissionResults.map(m => ({
       ...m,
-      steps: getMissionSteps(m.id, checkinEvents as EventRow[], friendInfos),
+      steps: getMissionSteps(m.id, checkinEvents as EventRow[], friendInfos, coordinators),
     })),
-    [baseMissionResults, checkinEvents, friendInfos]
+    [baseMissionResults, checkinEvents, friendInfos, coordinators]
   )
 
   const grouped = useMemo(() => {

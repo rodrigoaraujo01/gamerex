@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useAuth } from './auth'
-import { MISSIONS, POINTS_PER_CHECKIN, calculateTotalPoints, type Mission } from './missions'
-import type { EventRow } from './supabase'
+import { MISSIONS, POINTS_PER_CHECKIN, calculateTotalPoints, COORDINATOR_EMAILS, type Mission, type MissionContext } from './missions'
+import { supabase, type EventRow } from './supabase'
 
 export interface MissionResult extends Mission {
   result: { done: boolean; progress: number; total: number }
@@ -14,6 +14,19 @@ export interface FriendInfo {
 
 export function useGameData() {
   const { checkins, friendCheckins, events } = useAuth()
+  const [coordinatorIds, setCoordinatorIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    supabase
+      .from('users')
+      .select('id, email')
+      .in('email', COORDINATOR_EMAILS)
+      .then(({ data }) => {
+        if (data) setCoordinatorIds(new Set(data.map((u: { id: string }) => u.id)))
+      })
+  }, [])
+
+  const missionCtx = useMemo((): MissionContext => ({ coordinatorIds }), [coordinatorIds])
 
   const eventInfoMap = useMemo(() =>
     new Map(events.map(e => [e.id, e])),
@@ -31,13 +44,13 @@ export function useGameData() {
   )
 
   const totalPoints = useMemo(() =>
-    calculateTotalPoints(checkins, friendCheckins, checkinEvents as any, friendInfos),
-    [checkins, friendCheckins, checkinEvents, friendInfos]
+    calculateTotalPoints(checkins, friendCheckins, checkinEvents as any, friendInfos, missionCtx),
+    [checkins, friendCheckins, checkinEvents, friendInfos, missionCtx]
   )
 
   const missionResults = useMemo((): MissionResult[] =>
-    MISSIONS.map(m => ({ ...m, result: m.check(checkinEvents as any, friendInfos) })),
-    [checkinEvents, friendInfos]
+    MISSIONS.map(m => ({ ...m, result: m.check(checkinEvents as any, friendInfos, missionCtx) })),
+    [checkinEvents, friendInfos, missionCtx]
   )
 
   const completedMissions = useMemo(() =>
@@ -71,5 +84,6 @@ export function useGameData() {
     completedMissions,
     uniqueFriends,
     nextMission,
+    coordinatorIds,
   }
 }

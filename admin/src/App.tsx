@@ -22,8 +22,14 @@ interface MissionDef {
   id: string
   name: string
   points: number
-  check: (c: EventInfo[], f: FriendInfo[]) => boolean
+  check: (c: EventInfo[], f: FriendInfo[], coordIds?: Set<string>) => boolean
 }
+
+const COORDINATOR_EMAILS = [
+  'samya.pinheiro@petrobras.com.br',
+  'danyella.carvalho@petrobras.com.br',
+  'carolcaetano@petrobras.com.br',
+]
 
 const ROOMS = ['Auditório', 'Sala .DAT', 'Sala .LAS', 'Sala .SEGY']
 
@@ -47,6 +53,10 @@ const MISSIONS: MissionDef[] = [
   { id: 'expert_expo', name: 'Expert da Expo', points: 80, check: (c) => c.filter(e=>e.type==='stand').length>=9 },
   { id: 'sirr_expert', name: 'SIRR Expert', points: 100, check: (c) => c.filter(e=>e.type==='sirr').length>=4 },
   { id: 'happy_hour', name: 'Do Dado ao Barril', points: 50, check: (c) => c.filter(e=>e.type==='happyhour').length>=1 },
+  { id: 'lideres_supremas', name: 'Líderes Supremas', points: 100, check: (_c,f,coordIds) => {
+    if(!coordIds || coordIds.size===0) return false
+    const met = new Set<string>(); for(const x of f) if(coordIds.has(x.friend_id)) met.add(x.friend_id); return met.size>=3
+  }},
   { id: 'primeiro_contato', name: 'Primeiro Contato', points: 30, check: (_c,f) => new Set(f.map(x=>x.day)).size>=3 },
   { id: 'bff', name: 'BFF', points: 50, check: (_c,f) => {
     const m=new Map<string,Set<number>>(); for(const x of f){if(!m.has(x.friend_id))m.set(x.friend_id,new Set());m.get(x.friend_id)!.add(x.day)} ; for(const s of m.values()) if(s.size>=3)return true;return false
@@ -67,10 +77,10 @@ const MISSIONS: MissionDef[] = [
 // completista and rex_supremo depend on others
 const ALL_MISSIONS: MissionDef[] = [
   ...MISSIONS,
-  { id: 'completista', name: 'Completista', points: 150, check: (c,f) => MISSIONS.filter(m=>m.check(c,f)).length>=10 },
-  { id: 'rex_supremo', name: 'REX Supremo', points: 300, check: (c,f) => {
-    const others = [...MISSIONS, { id:'completista',name:'',points:0,check:(c2:EventInfo[],f2:FriendInfo[])=>MISSIONS.filter(m=>m.check(c2,f2)).length>=10 }]
-    return others.every(m=>m.check(c,f))
+  { id: 'completista', name: 'Completista', points: 150, check: (c,f,ci) => MISSIONS.filter(m=>m.check(c,f,ci)).length>=10 },
+  { id: 'rex_supremo', name: 'REX Supremo', points: 300, check: (c,f,ci) => {
+    const others = [...MISSIONS, { id:'completista',name:'',points:0,check:(c2:EventInfo[],f2:FriendInfo[],ci2?:Set<string>)=>MISSIONS.filter(m=>m.check(c2,f2,ci2)).length>=10 }]
+    return others.every(m=>m.check(c,f,ci))
   }},
 ]
 
@@ -147,6 +157,14 @@ export default function App() {
   useEffect(() => { if (authed) loadData() }, [authed, loadData])
 
   // ── Ranking calculation ──
+  const coordinatorIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const u of users) {
+      if (COORDINATOR_EMAILS.includes(u.email)) ids.add(u.id)
+    }
+    return ids
+  }, [users])
+
   const ranking = useMemo(() => {
     const eventMap = new Map(events.map(e => [e.id, e]))
 
@@ -159,8 +177,8 @@ export default function App() {
 
       const basePoints = userCheckins.length * POINTS_PER_CHECKIN
       const friendPoints = uniqueFriendDays * POINTS_PER_CHECKIN
-      const missionBonus = ALL_MISSIONS.reduce((sum, m) => sum + (m.check(eventInfos, friendInfos) ? m.points : 0), 0)
-      const completedMissions = ALL_MISSIONS.filter(m => m.check(eventInfos, friendInfos)).length
+      const missionBonus = ALL_MISSIONS.reduce((sum, m) => sum + (m.check(eventInfos, friendInfos, coordinatorIds) ? m.points : 0), 0)
+      const completedMissions = ALL_MISSIONS.filter(m => m.check(eventInfos, friendInfos, coordinatorIds)).length
 
       return {
         ...u,
@@ -170,7 +188,7 @@ export default function App() {
         totalPoints: basePoints + friendPoints + missionBonus,
       }
     }).sort((a, b) => b.totalPoints - a.totalPoints)
-  }, [users, checkins, friendCheckins, events])
+  }, [users, checkins, friendCheckins, events, coordinatorIds])
 
   if (!authed) return <LoginGate onAuth={() => setAuthed(true)} />
 
