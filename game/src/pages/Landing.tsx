@@ -29,7 +29,14 @@ export default function Landing() {
         </Link>
       </div>
 
-      <p className="text-gray-600 text-xs mt-12">
+      <Link
+        to="/rules"
+        className="text-gray-500 text-xs mt-8 hover:text-rex-green transition-colors"
+      >
+        ❓ Como jogar
+      </Link>
+
+      <p className="text-gray-600 text-xs mt-4">
         23–25 de março · RR-EE & EXP
       </p>
     </div>

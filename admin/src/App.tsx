@@ -89,7 +89,7 @@ function LoginGate({ onAuth }: { onAuth: () => void }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (pw === ADMIN_PASSWORD) {
-      sessionStorage.setItem('admin_auth', '1')
+      localStorage.setItem('admin_auth', '1')
       onAuth()
     } else {
       setErr(true)
@@ -121,7 +121,7 @@ function LoginGate({ onAuth }: { onAuth: () => void }) {
 type Tab = 'dashboard' | 'users' | 'checkins' | 'ranking'
 
 export default function App() {
-  const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin_auth') === '1')
+  const [authed, setAuthed] = useState(() => localStorage.getItem('admin_auth') === '1')
   const [tab, setTab] = useState<Tab>('dashboard')
   const [users, setUsers] = useState<User[]>([])
   const [checkins, setCheckins] = useState<Checkin[]>([])

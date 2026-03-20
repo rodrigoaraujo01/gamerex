@@ -8,6 +8,7 @@ import Missions from './pages/Missions'
 import History from './pages/History'
 import MyQR from './pages/MyQR'
 import Ranking from './pages/Ranking'
+import Rules from './pages/Rules'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/missions" element={<ProtectedRoute><Missions /></ProtectedRoute>} />
       <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
       <Route path="/myqr" element={<ProtectedRoute><MyQR /></ProtectedRoute>} />
+      <Route path="/rules" element={<Rules />} />
       <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

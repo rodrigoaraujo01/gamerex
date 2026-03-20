@@ -40,13 +40,16 @@ export default function Dashboard() {
       <div className="bg-rex-card border-b border-rex-border px-4 py-5">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div>
-            <p className="text-gray-400 text-sm">Olá,</p>
-            <p className="text-white font-semibold text-lg">{user.name} 🦖</p>
+            <p className="text-white font-semibold text-lg">{user.name}</p>
+            <p className="text-gray-400 text-sm">{level.emoji} {level.title}</p>
           </div>
-          <div className="text-right">
-            <p className="text-2xl">{level.emoji}</p>
-            <p className="text-gray-400 text-xs">{level.title}</p>
-          </div>
+          <Link
+            to="/rules"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-rex-bg border border-rex-border hover:border-rex-green/50 transition-colors"
+            title="Como Jogar"
+          >
+            <span className="text-lg">❓</span>
+          </Link>
         </div>
       </div>
 

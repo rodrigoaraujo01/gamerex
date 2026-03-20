@@ -136,7 +136,7 @@ CREATE OR REPLACE FUNCTION admin_reset_checkins()
 RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
-  DELETE FROM friend_checkins;
-  DELETE FROM checkins;
+  DELETE FROM friend_checkins WHERE true;
+  DELETE FROM checkins WHERE true;
 END;
 $$;
