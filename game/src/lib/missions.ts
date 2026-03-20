@@ -399,7 +399,7 @@ export const MISSIONS: Mission[] = [
     name: 'SIRR Expert',
     description: 'Faça as atividades de descoberta do SIRR Web',
     category: 'sirr',
-    points: 50,
+    points: 100,
     check: (c) => {
       const count = sirrs(c).length
       return { done: count >= 4, progress: Math.min(count, 4), total: 4 }
