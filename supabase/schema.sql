@@ -17,6 +17,7 @@ CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
+  is_online BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -46,20 +47,20 @@ CREATE INDEX idx_friend_checkins_user ON friend_checkins(user_id);
 CREATE INDEX idx_friend_checkins_friend ON friend_checkins(friend_id);
 
 -- RPC: Register or login
-CREATE OR REPLACE FUNCTION register_or_login(p_name TEXT, p_email TEXT)
-RETURNS TABLE(id UUID, name TEXT, email TEXT, created_at TIMESTAMPTZ)
+CREATE OR REPLACE FUNCTION register_or_login(p_name TEXT, p_email TEXT, p_is_online BOOLEAN DEFAULT false)
+RETURNS TABLE(id UUID, name TEXT, email TEXT, is_online BOOLEAN, created_at TIMESTAMPTZ)
 LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
   v_user users%ROWTYPE;
 BEGIN
   SELECT * INTO v_user FROM users WHERE users.email = lower(trim(p_email));
   IF FOUND THEN
-    RETURN QUERY SELECT v_user.id, v_user.name, v_user.email, v_user.created_at;
+    RETURN QUERY SELECT v_user.id, v_user.name, v_user.email, v_user.is_online, v_user.created_at;
   ELSE
-    INSERT INTO users (name, email)
-    VALUES (trim(p_name), lower(trim(p_email)))
+    INSERT INTO users (name, email, is_online)
+    VALUES (trim(p_name), lower(trim(p_email)), p_is_online)
     RETURNING * INTO v_user;
-    RETURN QUERY SELECT v_user.id, v_user.name, v_user.email, v_user.created_at;
+    RETURN QUERY SELECT v_user.id, v_user.name, v_user.email, v_user.is_online, v_user.created_at;
   END IF;
 END;
 $$;

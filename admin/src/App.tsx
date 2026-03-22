@@ -88,7 +88,7 @@ const ALL_MISSIONS: MissionDef[] = [
 ]
 
 // ── Types ──
-interface User { id: string; name: string; email: string; created_at: string }
+interface User { id: string; name: string; email: string; is_online: boolean; created_at: string }
 interface Checkin { id: string; user_id: string; event_id: string; created_at: string }
 interface FriendCheckin { id: string; user_id: string; friend_id: string; day: number; created_at: string }
 
@@ -214,6 +214,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [userSort, setUserSort] = useState<{ col: 'name' | 'email' | 'created_at' | 'totalPoints'; dir: 'asc' | 'desc' }>({ col: 'totalPoints', dir: 'desc' })
+  const [rankingFilter, setRankingFilter] = useState<'all' | 'presencial' | 'online'>('all')
 
   const sortedUsers = useMemo(() => {
     const sorted = [...ranking]
@@ -235,6 +236,13 @@ export default function App() {
   }
 
   const sortIcon = (col: typeof userSort.col) => userSort.col === col ? (userSort.dir === 'asc' ? ' ▲' : ' ▼') : ''
+
+  const filteredRanking = useMemo(() => {
+    if (rankingFilter === 'all') return ranking
+    const wantOnline = rankingFilter === 'online'
+    const userIsOnline = new Map(users.map(u => [u.id, u.is_online]))
+    return ranking.filter(u => userIsOnline.get(u.id) === wantOnline)
+  }, [ranking, rankingFilter, users])
 
   const resetCheckins = async () => {
     if (!window.confirm('⚠️ Tem certeza? Isso vai apagar TODOS os checkins e encontros de amigos de todos os usuários.')) return
@@ -408,7 +416,21 @@ export default function App() {
 
             {/* Ranking */}
             {tab === 'ranking' && (
-              <div className="bg-white rounded-xl border overflow-x-auto">
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  {(['all', 'presencial', 'online'] as const).map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setRankingFilter(f)}
+                      className={`px-4 py-1.5 rounded-lg text-sm capitalize ${
+                        rankingFilter === f ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100 bg-white border'
+                      }`}
+                    >
+                      {f === 'all' ? 'Todos' : f === 'presencial' ? 'Presencial' : 'Online'}
+                    </button>
+                  ))}
+                </div>
+                <div className="bg-white rounded-xl border overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-left">
                     <tr>
@@ -421,7 +443,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {ranking.map((u, i) => (
+                    {filteredRanking.map((u, i) => (
                       <tr key={u.id} className={`hover:bg-gray-50 ${i < 3 ? 'bg-yellow-50' : ''}`}>
                         <td className="px-4 py-2 font-bold text-gray-400">
                           {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
@@ -435,6 +457,7 @@ export default function App() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
           </>

@@ -11,6 +11,7 @@ export default function Register() {
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [isOnline, setIsOnline] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -32,7 +33,7 @@ export default function Register() {
 
     setLoading(true)
     try {
-      await register(trimmedName || trimmedEmail.split('@')[0]!, trimmedEmail)
+      await register(trimmedName || trimmedEmail.split('@')[0]!, trimmedEmail, isOnline)
       navigate(redirect)
     } catch {
       setError('Erro ao registrar. Tente novamente.')
@@ -74,6 +75,18 @@ export default function Register() {
             autoComplete="email"
           />
         </div>
+
+        {!isLogin && (
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isOnline}
+              onChange={e => setIsOnline(e.target.checked)}
+              className="w-5 h-5 rounded border-rex-border bg-rex-card text-rex-green focus:ring-rex-green accent-rex-green"
+            />
+            <span className="text-gray-400 text-sm">Participação online</span>
+          </label>
+        )}
 
         {error && (
           <p className="text-red-400 text-sm text-center">{error}</p>

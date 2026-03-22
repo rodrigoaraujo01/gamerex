@@ -10,7 +10,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  register: (name: string, email: string) => Promise<UserRow>
+  register: (name: string, email: string, isOnline?: boolean) => Promise<UserRow>
   logout: () => void
   refreshData: () => Promise<void>
 }
@@ -84,10 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     init()
   }, [loadEvents, loadUserData])
 
-  const register = async (name: string, email: string): Promise<UserRow> => {
+  const register = async (name: string, email: string, isOnline?: boolean): Promise<UserRow> => {
     const { data, error } = await supabase.rpc('register_or_login', {
       p_name: name,
       p_email: email,
+      p_is_online: isOnline ?? false,
     })
     if (error) throw error
     const user = (data as UserRow[])[0]!

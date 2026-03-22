@@ -19,6 +19,7 @@ export interface UserRow {
   id: string
   name: string
   email: string
+  is_online: boolean
   created_at: string
 }
 
