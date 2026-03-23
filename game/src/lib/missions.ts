@@ -477,7 +477,7 @@ export const MISSIONS: Mission[] = [
     name: 'Poço das ideias',
     description: 'Adicionar uma ideia na Jornada do Dado',
     category: 'stand',
-    points: 50,
+    points: 100,
     check: (c) => {
       const standIds = new Set(c.filter(e => e.type === 'stand').map(e => e.id))
       const pocoIds = new Set(pocos(c).map(e => e.id))
