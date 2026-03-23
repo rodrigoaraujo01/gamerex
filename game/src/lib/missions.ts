@@ -10,7 +10,7 @@ export const POINTS_PER_CHECKIN = 10
 
 interface EventInfo {
   id: string
-  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink' | 'dado'
+  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink' | 'dado' | 'agora'
   day: number
   room: string | null
   track_code: string | null
@@ -63,6 +63,7 @@ function sirrs(c: EventInfo[]) { return c.filter(e => e.type === 'sirr') }
 function happyhours(c: EventInfo[]) { return c.filter(e => e.type === 'happyhour') }
 function geolinks(c: EventInfo[]) { return c.filter(e => e.type === 'geolink') }
 function dados(c: EventInfo[]) { return c.filter(e => e.type === 'dado') }
+function agoras(c: EventInfo[]) { return c.filter(e => e.type === 'agora') }
 
 function uniqueDays(items: { day: number }[]): Set<number> {
   return new Set(items.map(i => i.day))
@@ -465,6 +466,21 @@ export const MISSIONS: Mission[] = [
       const d = dados(c)
       const ids = new Set(d.map(e => e.id))
       const count = ['CD1', 'CD2', 'CD3'].filter(id => ids.has(id)).length
+      return { done: count >= 3, progress: count, total: 3 }
+    },
+  },
+
+  // ─── Ágora ───
+  {
+    id: 'fui_em_atenas',
+    name: 'Fui em Atenas e voltei',
+    description: 'Visitar o stand do Ágora e participar da ativação',
+    category: 'stand',
+    points: 100,
+    check: (c) => {
+      const standIds = new Set(c.filter(e => e.type === 'stand').map(e => e.id))
+      const agoraIds = new Set(agoras(c).map(e => e.id))
+      const count = (standIds.has('STAND-1-D3') ? 1 : 0) + (agoraIds.has('AG1') ? 1 : 0) + (agoraIds.has('AG2') ? 1 : 0)
       return { done: count >= 3, progress: count, total: 3 }
     },
   },

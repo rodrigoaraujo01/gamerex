@@ -159,6 +159,15 @@ function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[],
         { label: 'Veja o que a Petrobras tem comprado de outras empresas', done: ids.has('CD3') },
       ]
     }
+    case 'fui_em_atenas': {
+      const standIds = new Set(byType('stand').map(e => e.id))
+      const agoraIds = new Set(byType('agora').map(e => e.id))
+      return [
+        { label: 'Visitar o stand do Ágora', done: standIds.has('STAND-1-D3') },
+        { label: 'Se cadastrar no Ágora', done: agoraIds.has('AG1') },
+        { label: 'Trazer um amigo para o Ágora', done: agoraIds.has('AG2') },
+      ]
+    }
     case 'lideres_supremas': {
       if (!coordinators || coordinators.length === 0) return null
       const metIds = new Set(friends.map(f => f.friend_id))

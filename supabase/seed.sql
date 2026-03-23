@@ -184,5 +184,9 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('CD2', 'dado', 1, NULL, NULL, NULL, NULL),
 ('CD3', 'dado', 1, NULL, NULL, NULL, NULL),
 
+-- Ágora Activities (available all days)
+('AG1', 'agora', 1, NULL, NULL, NULL, NULL),
+('AG2', 'agora', 1, NULL, NULL, NULL, NULL),
+
 -- Happy Hour
 ('HH1', 'happyhour', 1, NULL, NULL, NULL, NULL);
