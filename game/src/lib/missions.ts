@@ -10,7 +10,7 @@ export const POINTS_PER_CHECKIN = 10
 
 interface EventInfo {
   id: string
-  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink' | 'dado' | 'agora'
+  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink' | 'dado' | 'agora' | 'poco'
   day: number
   room: string | null
   track_code: string | null
@@ -64,6 +64,7 @@ function happyhours(c: EventInfo[]) { return c.filter(e => e.type === 'happyhour
 function geolinks(c: EventInfo[]) { return c.filter(e => e.type === 'geolink') }
 function dados(c: EventInfo[]) { return c.filter(e => e.type === 'dado') }
 function agoras(c: EventInfo[]) { return c.filter(e => e.type === 'agora') }
+function pocos(c: EventInfo[]) { return c.filter(e => e.type === 'poco') }
 
 function uniqueDays(items: { day: number }[]): Set<number> {
   return new Set(items.map(i => i.day))
@@ -467,6 +468,21 @@ export const MISSIONS: Mission[] = [
       const ids = new Set(d.map(e => e.id))
       const count = ['CD1', 'CD2', 'CD3'].filter(id => ids.has(id)).length
       return { done: count >= 3, progress: count, total: 3 }
+    },
+  },
+
+  // ─── Poço das Ideias ───
+  {
+    id: 'poco_ideias',
+    name: 'Poço das ideias',
+    description: 'Adicionar uma ideia na Jornada do Dado',
+    category: 'stand',
+    points: 50,
+    check: (c) => {
+      const standIds = new Set(c.filter(e => e.type === 'stand').map(e => e.id))
+      const pocoIds = new Set(pocos(c).map(e => e.id))
+      const count = (standIds.has('STAND-2-D1') ? 1 : 0) + (pocoIds.has('POCO1') ? 1 : 0)
+      return { done: count >= 2, progress: count, total: 2 }
     },
   },
 

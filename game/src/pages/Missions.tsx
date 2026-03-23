@@ -159,6 +159,14 @@ function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[],
         { label: 'Veja o que a Petrobras tem comprado de outras empresas', done: ids.has('CD3') },
       ]
     }
+    case 'poco_ideias': {
+      const standIds2 = new Set(byType('stand').map(e => e.id))
+      const pocoIds = new Set(byType('poco').map(e => e.id))
+      return [
+        { label: 'Visitar o stand da Jornada do Dado', done: standIds2.has('STAND-2-D1') },
+        { label: 'Cadastrar uma ideia', done: pocoIds.has('POCO1') },
+      ]
+    }
     case 'fui_em_atenas': {
       const standIds = new Set(byType('stand').map(e => e.id))
       const agoraIds = new Set(byType('agora').map(e => e.id))

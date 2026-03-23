@@ -55,6 +55,7 @@ const MISSIONS: MissionDef[] = [
   { id: 'geolinker', name: 'GeoLinker', points: 100, check: (c) => { const ids=new Set(c.filter(e=>e.type==='geolink').map(e=>e.id)); return['GL1','GL2','GL3'].every(id=>ids.has(id)) }},
   { id: 'explorador_geolink', name: 'Explorador de Soluções do GeoLink', points: 100, check: (c) => { const ids=new Set(c.filter(e=>e.type==='geolink').map(e=>e.id)); return['GL4','GL5','GL6','GL7'].every(id=>ids.has(id)) }},
   { id: 'cacando_dado', name: 'Caçando o Dado', points: 100, check: (c) => { const ids=new Set(c.filter(e=>e.type==='dado').map(e=>e.id)); return['CD1','CD2','CD3'].every(id=>ids.has(id)) }},
+  { id: 'poco_ideias', name: 'Poço das ideias', points: 50, check: (c) => { const sIds=new Set(c.filter(e=>e.type==='stand').map(e=>e.id)); const pIds=new Set(c.filter(e=>e.type==='poco').map(e=>e.id)); return sIds.has('STAND-2-D1')&&pIds.has('POCO1') }},
   { id: 'fui_em_atenas', name: 'Fui em Atenas e voltei', points: 100, check: (c) => { const sIds=new Set(c.filter(e=>e.type==='stand').map(e=>e.id)); const aIds=new Set(c.filter(e=>e.type==='agora').map(e=>e.id)); return sIds.has('STAND-1-D3')&&aIds.has('AG1')&&aIds.has('AG2') }},
   { id: 'happy_hour', name: 'Do Dado ao Barril', points: 50, check: (c) => c.filter(e=>e.type==='happyhour').length>=1 },
   { id: 'lideres_supremas', name: 'Líderes Supremas', points: 100, check: (_c,f,coordIds) => {

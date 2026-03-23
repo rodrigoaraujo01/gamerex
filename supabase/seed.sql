@@ -188,5 +188,8 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('AG1', 'agora', 1, NULL, NULL, NULL, NULL),
 ('AG2', 'agora', 1, NULL, NULL, NULL, NULL),
 
+-- Poço das Ideias Activities (available all days)
+('POCO1', 'poco', 1, NULL, NULL, NULL, NULL),
+
 -- Happy Hour
 ('HH1', 'happyhour', 1, NULL, NULL, NULL, NULL);
