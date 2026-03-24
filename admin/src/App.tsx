@@ -1,6 +1,22 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 
+async function fetchAll<T>(table: string, orderCol?: string, ascending?: boolean): Promise<T[]> {
+  const PAGE = 1000
+  let all: T[] = []
+  let from = 0
+  while (true) {
+    let q = supabase.from(table).select('*').range(from, from + PAGE - 1)
+    if (orderCol) q = q.order(orderCol, { ascending: ascending ?? true })
+    const { data } = await q
+    if (!data || data.length === 0) break
+    all = all.concat(data as T[])
+    if (data.length < PAGE) break
+    from += PAGE
+  }
+  return all
+}
+
 // ── Missions engine (same logic as game, for ranking calculation) ──
 const POINTS_PER_CHECKIN = 10
 
@@ -157,16 +173,16 @@ export default function App() {
 
   const loadData = useCallback(async () => {
     setLoading(true)
-    const [uRes, cRes, fRes, eRes] = await Promise.all([
-      supabase.from('users').select('*').order('created_at', { ascending: false }),
-      supabase.from('checkins').select('*').order('created_at', { ascending: false }),
-      supabase.from('friend_checkins').select('*'),
-      supabase.from('events').select('*'),
+    const [u, c, f, e] = await Promise.all([
+      fetchAll<User>('users', 'created_at', false),
+      fetchAll<Checkin>('checkins', 'created_at', false),
+      fetchAll<FriendCheckin>('friend_checkins'),
+      fetchAll<EventInfo>('events'),
     ])
-    setUsers((uRes.data ?? []) as User[])
-    setCheckins((cRes.data ?? []) as Checkin[])
-    setFriendCheckins((fRes.data ?? []) as FriendCheckin[])
-    setEvents((eRes.data ?? []) as EventInfo[])
+    setUsers(u)
+    setCheckins(c)
+    setFriendCheckins(f)
+    setEvents(e)
     setLoading(false)
   }, [])
 

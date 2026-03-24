@@ -1,8 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase, type UserRow, type CheckinRow, type FriendCheckinRow, type EventRow } from '../lib/supabase'
-import { MISSIONS, POINTS_PER_CHECKIN, getPlayerLevel } from '../lib/missions'
+import { MISSIONS, POINTS_PER_CHECKIN, getPlayerLevel, COORDINATOR_EMAILS } from '../lib/missions'
+import { CANCELLED_EVENTS } from '../lib/dayUtils'
 import Navbar from '../components/Navbar'
+
+async function fetchAll<T>(table: string, orderCol?: string): Promise<T[]> {
+  const PAGE = 1000
+  let all: T[] = []
+  let from = 0
+  while (true) {
+    let q = supabase.from(table).select('*').range(from, from + PAGE - 1)
+    if (orderCol) q = q.order(orderCol)
+    const { data } = await q
+    if (!data || data.length === 0) break
+    all = all.concat(data as T[])
+    if (data.length < PAGE) break
+    from += PAGE
+  }
+  return all
+}
 
 interface RankedUser {
   id: string
@@ -23,26 +40,35 @@ export default function Ranking() {
 
   useEffect(() => {
     const load = async () => {
-      const [uRes, cRes, fRes, eRes] = await Promise.all([
-        supabase.from('users').select('*'),
-        supabase.from('checkins').select('*'),
-        supabase.from('friend_checkins').select('*'),
-        supabase.from('events').select('*'),
+      const [users, checkins, friends, events] = await Promise.all([
+        fetchAll<UserRow>('users'),
+        fetchAll<CheckinRow>('checkins'),
+        fetchAll<FriendCheckinRow>('friend_checkins'),
+        fetchAll<EventRow>('events'),
       ])
-      setAllUsers((uRes.data ?? []) as UserRow[])
-      setAllCheckins((cRes.data ?? []) as CheckinRow[])
-      setAllFriendCheckins((fRes.data ?? []) as FriendCheckinRow[])
-      setAllEvents((eRes.data ?? []) as EventRow[])
+      setAllUsers(users)
+      setAllCheckins(checkins)
+      setAllFriendCheckins(friends)
+      setAllEvents(events)
       setLoading(false)
     }
     load()
   }, [])
 
+  const coordinatorIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const u of allUsers) {
+      if (COORDINATOR_EMAILS.includes(u.email)) ids.add(u.id)
+    }
+    return ids
+  }, [allUsers])
+
   const ranking = useMemo((): RankedUser[] => {
     const eventMap = new Map(allEvents.map(e => [e.id, e]))
+    const ctx = { coordinatorIds }
 
     return allUsers.map(u => {
-      const userCheckins = allCheckins.filter(c => c.user_id === u.id)
+      const userCheckins = allCheckins.filter(c => c.user_id === u.id && !CANCELLED_EVENTS.has(c.event_id))
       const userFriends = allFriendCheckins.filter(f => f.user_id === u.id)
       const eventInfos = userCheckins.map(c => eventMap.get(c.event_id)).filter(Boolean) as EventRow[]
       const friendInfos = userFriends.map(f => ({ friend_id: f.friend_id, day: f.day }))
@@ -51,7 +77,7 @@ export default function Ranking() {
       const basePoints = userCheckins.length * POINTS_PER_CHECKIN
       const friendPoints = uniqueFriendDays * POINTS_PER_CHECKIN
       const missionBonus = MISSIONS.reduce(
-        (sum, m) => sum + (m.check(eventInfos as any, friendInfos).done ? m.points : 0), 0
+        (sum, m) => sum + (m.check(eventInfos as any, friendInfos, ctx).done ? m.points : 0), 0
       )
 
       return {
@@ -60,10 +86,10 @@ export default function Ranking() {
         totalPoints: basePoints + friendPoints + missionBonus,
         checkinCount: userCheckins.length,
         friendCount: new Set(userFriends.map(f => f.friend_id)).size,
-        completedMissions: MISSIONS.filter(m => m.check(eventInfos as any, friendInfos).done).length,
+        completedMissions: MISSIONS.filter(m => m.check(eventInfos as any, friendInfos, ctx).done).length,
       }
     }).sort((a, b) => b.totalPoints - a.totalPoints)
-  }, [allUsers, allCheckins, allFriendCheckins, allEvents])
+  }, [allUsers, allCheckins, allFriendCheckins, allEvents, coordinatorIds])
 
   const myRank = useMemo(() => {
     if (!user) return null
