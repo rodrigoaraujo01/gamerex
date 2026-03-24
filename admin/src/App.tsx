@@ -228,6 +228,7 @@ export default function App() {
   const [resetting, setResetting] = useState(false)
   const [userSort, setUserSort] = useState<{ col: 'name' | 'email' | 'created_at' | 'totalPoints'; dir: 'asc' | 'desc' }>({ col: 'totalPoints', dir: 'desc' })
   const [rankingFilter, setRankingFilter] = useState<'all' | 'presencial' | 'online'>('all')
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const sortedUsers = useMemo(() => {
     const sorted = [...ranking]
@@ -256,6 +257,47 @@ export default function App() {
     const userIsOnline = new Map(users.map(u => [u.id, u.is_online]))
     return ranking.filter(u => userIsOnline.get(u.id) === wantOnline)
   }, [ranking, rankingFilter, users])
+
+  const selectedUserData = useMemo(() => {
+    if (!selectedUserId) return null
+    const user = users.find(u => u.id === selectedUserId)
+    if (!user) return null
+    const eventMap = new Map<string, EventInfo>(events.map((e: EventInfo) => [e.id, e]))
+    const userCheckins = checkins.filter((c: Checkin) => c.user_id === selectedUserId && !CANCELLED_EVENTS.has(c.event_id))
+    const userFriends = friendCheckins.filter((f: FriendCheckin) => f.user_id === selectedUserId)
+    const eventInfos = userCheckins.map((c: Checkin) => eventMap.get(c.event_id)).filter(Boolean) as EventInfo[]
+    const friendInfos = userFriends.map(f => ({ friend_id: f.friend_id, day: f.day }))
+
+    // Friend names
+    const userMap = new Map(users.map(u => [u.id, u.name]))
+    const friendEntries = userFriends.map(f => ({
+      name: userMap.get(f.friend_id) ?? f.friend_id.slice(0, 8),
+      day: f.day,
+      created_at: f.created_at,
+    }))
+
+    // Mission results
+    const missionResults = ALL_MISSIONS.map(m => ({
+      ...m,
+      done: m.check(eventInfos, friendInfos, coordinatorIds),
+    }))
+
+    // Checkin events with details
+    const checkinDetails = userCheckins.map(c => {
+      const ev = eventMap.get(c.event_id)
+      return {
+        event_id: c.event_id,
+        type: ev?.type ?? '?',
+        room: ev?.room ?? null,
+        day: ev?.day ?? 0,
+        created_at: c.created_at,
+      }
+    }).sort((a, b) => b.created_at.localeCompare(a.created_at))
+
+    const rankEntry = ranking.find(r => r.id === selectedUserId)
+
+    return { user, checkinDetails, friendEntries, missionResults, totalPoints: rankEntry?.totalPoints ?? 0 }
+  }, [selectedUserId, users, checkins, friendCheckins, events, ranking, coordinatorIds])
 
   const resetCheckins = async () => {
     if (!window.confirm('⚠️ Tem certeza? Isso vai apagar TODOS os checkins e encontros de amigos de todos os usuários.')) return
@@ -461,7 +503,11 @@ export default function App() {
                         <td className="px-4 py-2 font-bold text-gray-400">
                           {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                         </td>
-                        <td className="px-4 py-2 font-medium">{u.name}</td>
+                        <td className="px-4 py-2 font-medium">
+                          <button onClick={() => setSelectedUserId(u.id)} className="text-blue-600 hover:underline text-left">
+                            {u.name}
+                          </button>
+                        </td>
                         <td className="px-4 py-2 text-right">{u.checkinCount}</td>
                         <td className="px-4 py-2 text-right">{u.friendCount}</td>
                         <td className="px-4 py-2 text-right">{u.completedMissions}/{ALL_MISSIONS.length}</td>
@@ -476,6 +522,125 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* User Detail Modal */}
+      {selectedUserData && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-8 px-4 overflow-y-auto" onClick={() => setSelectedUserId(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mb-8" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">{selectedUserData.user.name}</h2>
+                <p className="text-sm text-gray-500">{selectedUserData.user.email}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-green-600 font-bold text-lg">{selectedUserData.totalPoints} pts</span>
+                <button onClick={() => setSelectedUserId(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+              </div>
+            </div>
+
+            {/* Tabs inside modal */}
+            <UserDetailTabs data={selectedUserData} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+type UserDetailTab = 'checkins' | 'amigos' | 'missoes'
+
+interface UserDetailData {
+  checkinDetails: { event_id: string; type: string; room: string | null; day: number; created_at: string }[]
+  friendEntries: { name: string; day: number; created_at: string }[]
+  missionResults: { id: string; name: string; points: number; done: boolean }[]
+}
+
+function UserDetailTabs({ data }: { data: UserDetailData }) {
+  const [tab, setTab] = useState<UserDetailTab>('checkins')
+
+  const dayLabel = (d: number) => ['', '23/mar', '24/mar', '25/mar'][d] ?? `D${d}`
+  const typeEmoji: Record<string, string> = { oral: '🎤', poster: '🖼️', plenaria: '🎙️', stand: '🏛️', sirr: '💻', happyhour: '🍻', geolink: '🔗', dado: '🎲', agora: '🏛️', poco: '💡', gamee: '🎮', camalis: '🧪' }
+
+  return (
+    <div>
+      <div className="flex border-b">
+        {([['checkins', `📋 Checkins (${data.checkinDetails.length})`], ['amigos', `🤝 Amigos (${data.friendEntries.length})`], ['missoes', `🏆 Missões (${data.missionResults.filter(m => m.done).length}/${data.missionResults.length})`]] as const).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium ${tab === id ? 'text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="max-h-[60vh] overflow-y-auto">
+        {tab === 'checkins' && (
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left sticky top-0">
+              <tr>
+                <th className="px-4 py-2 font-medium text-gray-600">Evento</th>
+                <th className="px-4 py-2 font-medium text-gray-600">Tipo</th>
+                <th className="px-4 py-2 font-medium text-gray-600">Dia</th>
+                <th className="px-4 py-2 font-medium text-gray-600">Hora</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {data.checkinDetails.map(c => (
+                <tr key={c.event_id} className="hover:bg-gray-50">
+                  <td className="px-4 py-1.5 font-mono text-xs">{c.event_id}</td>
+                  <td className="px-4 py-1.5">{typeEmoji[c.type] ?? '📌'} {c.type}{c.room ? ` · ${c.room}` : ''}</td>
+                  <td className="px-4 py-1.5 text-gray-500">{dayLabel(c.day)}</td>
+                  <td className="px-4 py-1.5 text-gray-500">{new Date(c.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
+                </tr>
+              ))}
+              {data.checkinDetails.length === 0 && (
+                <tr><td colSpan={4} className="px-4 py-6 text-center text-gray-400">Nenhum checkin</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
+
+        {tab === 'amigos' && (
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left sticky top-0">
+              <tr>
+                <th className="px-4 py-2 font-medium text-gray-600">Amigo</th>
+                <th className="px-4 py-2 font-medium text-gray-600">Dia</th>
+                <th className="px-4 py-2 font-medium text-gray-600">Hora</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {data.friendEntries.map((f, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-4 py-1.5 font-medium">{f.name}</td>
+                  <td className="px-4 py-1.5 text-gray-500">{dayLabel(f.day)}</td>
+                  <td className="px-4 py-1.5 text-gray-500">{new Date(f.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
+                </tr>
+              ))}
+              {data.friendEntries.length === 0 && (
+                <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400">Nenhum amigo</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
+
+        {tab === 'missoes' && (
+          <div className="divide-y">
+            {data.missionResults.map(m => (
+              <div key={m.id} className={`px-4 py-2.5 flex items-center justify-between ${m.done ? '' : 'opacity-40'}`}>
+                <div className="flex items-center gap-2">
+                  <span>{m.done ? '✅' : '⬜'}</span>
+                  <span className="text-sm font-medium">{m.name}</span>
+                </div>
+                <span className={`text-sm font-semibold ${m.done ? 'text-green-600' : 'text-gray-400'}`}>{m.points} pts</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
