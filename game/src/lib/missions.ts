@@ -208,18 +208,36 @@ export const MISSIONS: Mission[] = [
   },
 
   {
-    id: 'fiel_posters',
-    name: 'Fiel aos Posters',
-    description: 'Ver todos os posters em cada dia do evento',
+    id: 'fiel_posters_d1',
+    name: 'Fiel aos Posters — Dia 1',
+    description: 'Ver todos os 20 posters do dia 1',
     category: 'poster',
-    points: 150,
+    points: 50,
     check: (c) => {
-      let daysOk = 0
-      for (const day of [1, 2, 3]) {
-        const count = posters(c).filter(e => e.day === day).length
-        if (count >= POSTERS_PER_DAY) daysOk++
-      }
-      return { done: daysOk >= 3, progress: daysOk, total: 3 }
+      const count = posters(c).filter(e => e.day === 1).length
+      return { done: count >= POSTERS_PER_DAY, progress: Math.min(count, POSTERS_PER_DAY), total: POSTERS_PER_DAY }
+    },
+  },
+  {
+    id: 'fiel_posters_d2',
+    name: 'Fiel aos Posters — Dia 2',
+    description: 'Ver todos os 20 posters do dia 2',
+    category: 'poster',
+    points: 50,
+    check: (c) => {
+      const count = posters(c).filter(e => e.day === 2).length
+      return { done: count >= POSTERS_PER_DAY, progress: Math.min(count, POSTERS_PER_DAY), total: POSTERS_PER_DAY }
+    },
+  },
+  {
+    id: 'fiel_posters_d3',
+    name: 'Fiel aos Posters — Dia 3',
+    description: 'Ver todos os 20 posters do dia 3',
+    category: 'poster',
+    points: 50,
+    check: (c) => {
+      const count = posters(c).filter(e => e.day === 3).length
+      return { done: count >= POSTERS_PER_DAY, progress: Math.min(count, POSTERS_PER_DAY), total: POSTERS_PER_DAY }
     },
   },
   {
