@@ -108,9 +108,10 @@ export default function Scan() {
       return
     }
 
-    // Rule 3: Check event day matches current day (skip for SIRR/HH — available all days)
+    // Rule 3: Check event day matches current day (skip for activity types — available all days)
+    const ALL_DAYS_TYPES = new Set(['sirr', 'happyhour', 'geolink', 'dado', 'agora', 'poco', 'gamee', 'camalis'])
     const today = getCurrentDay()
-    if (event.type !== 'sirr' && event.type !== 'happyhour' && event.day !== today) {
+    if (!ALL_DAYS_TYPES.has(event.type) && event.day !== today) {
       // Allow extended checkin: events presented on D1 can also be checked in on D2
       const isExtended = EXTENDED_CHECKIN_EVENTS.has(event.id) && today === 2 && event.day === 1
       if (!isExtended) {
