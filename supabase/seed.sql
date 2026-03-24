@@ -36,22 +36,23 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('A0027', 'oral', 1, 'Auditório', '15h20-15h45', 'T2', 'T2-3'),
 ('A0003', 'oral', 1, 'Auditório', '15h45-16h10', 'T1', 'T1-3'),
 
--- Orais Dia 1 - Sala .DAT
+-- Orais Dia 1 - Sala .DAT (A0006 cancelada, A0041 no seu lugar)
 ('A0006', 'oral', 1, 'Sala .DAT', '14h30-14h55', 'T1', 'T1-1'),
+('A0041', 'oral', 1, 'Sala .DAT', '14h30-14h55', 'T3', 'T3-3'),
 ('A0009', 'oral', 1, 'Sala .DAT', '14h55-15h20', 'T1', 'T1-3'),
 ('A0043', 'oral', 1, 'Sala .DAT', '15h20-15h45', 'T3', 'T3-4'),
 ('A0030', 'oral', 1, 'Sala .DAT', '15h45-16h10', 'T2', 'T2-2'),
 
--- Orais Dia 1 - Sala .LAS
+-- Orais Dia 1 - Sala .LAS (A0040 movida p/ D2, A0014 assume slot 15h20)
 ('A0019', 'oral', 1, 'Sala .LAS', '14h30-14h55', 'T1', 'T1-1'),
 ('A0015', 'oral', 1, 'Sala .LAS', '14h55-15h20', 'T1', 'T1-4'),
-('A0040', 'oral', 1, 'Sala .LAS', '15h20-15h45', 'T2', 'T2-2'),
+('A0014', 'oral', 1, 'Sala .LAS', '15h20-15h45', 'T1', 'T1-1'),
 ('A0037', 'oral', 1, 'Sala .LAS', '15h45-16h10', 'T2', 'T2-1'),
 
--- Orais Dia 1 - Sala .SEGY
+-- Orais Dia 1 - Sala .SEGY (A0034 assume slot 15h20 de A0031)
 ('A0013', 'oral', 1, 'Sala .SEGY', '14h30-14h55', 'T1', 'T1-1'),
 ('A0010', 'oral', 1, 'Sala .SEGY', '14h55-15h20', 'T1', 'T1-4'),
-('A0031', 'oral', 1, 'Sala .SEGY', '15h20-15h45', 'T2', 'T2-3'),
+('A0034', 'oral', 1, 'Sala .SEGY', '15h20-15h45', 'T2', 'T2-3'),
 ('A0032', 'oral', 1, 'Sala .SEGY', '15h45-16h10', 'T2', 'T2-3'),
 
 -- Orais Dia 2 - Auditório
@@ -61,8 +62,8 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('A0026', 'oral', 2, 'Auditório', '15h45-16h10', 'T2', 'T2-2'),
 ('A0005', 'oral', 2, 'Auditório', '16h10-16h35', 'T1', 'T1-4'),
 
--- Orais Dia 2 - Sala .DAT
-('A0014', 'oral', 2, 'Sala .DAT', '14h30-14h55', 'T1', 'T1-1'),
+-- Orais Dia 2 - Sala .DAT (A0040 assume slot 14h30 de A0014)
+('A0040', 'oral', 2, 'Sala .DAT', '14h30-14h55', 'T2', 'T2-2'),
 ('A0008', 'oral', 2, 'Sala .DAT', '14h55-15h20', 'T1', 'T1-1'),
 ('A0011', 'oral', 2, 'Sala .DAT', '15h20-15h45', 'T1', 'T1-1'),
 ('A0029', 'oral', 2, 'Sala .DAT', '15h45-16h10', 'T2', 'T2-3'),
@@ -75,11 +76,11 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('A0038', 'oral', 2, 'Sala .LAS', '15h45-16h10', 'T2', 'T2-3'),
 ('A0023', 'oral', 2, 'Sala .LAS', '16h10-16h35', 'T1', 'T1-1'),
 
--- Orais Dia 2 - Sala .SEGY
-('A0041', 'oral', 2, 'Sala .SEGY', '14h30-14h55', 'T3', 'T3-3'),
+-- Orais Dia 2 - Sala .SEGY (A0039 assume 14h30, A0031 assume 15h45)
+('A0039', 'oral', 2, 'Sala .SEGY', '14h30-14h55', 'T2', 'T2-3'),
 ('A0017', 'oral', 2, 'Sala .SEGY', '14h55-15h20', 'T1', 'T1-1'),
 ('A0020', 'oral', 2, 'Sala .SEGY', '15h20-15h45', 'T1', 'T1-2'),
-('A0034', 'oral', 2, 'Sala .SEGY', '15h45-16h10', 'T2', 'T2-3'),
+('A0031', 'oral', 2, 'Sala .SEGY', '15h45-16h10', 'T2', 'T2-3'),
 ('A0035', 'oral', 2, 'Sala .SEGY', '16h10-16h35', 'T2', 'T2-3'),
 
 -- Orais Dia 3 - Auditório
@@ -90,9 +91,8 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('A0012', 'oral', 3, 'Sala .DAT', '14h30-14h55', 'T1', 'T1-1'),
 ('A0044', 'oral', 3, 'Sala .DAT', '14h55-15h20', 'T3', 'T3-4'),
 
--- Orais Dia 3 - Sala .LAS
+-- Orais Dia 3 - Sala .LAS (A0022 cancelada, A0039 movida p/ D2 — sala vazia no D3)
 ('A0022', 'oral', 3, 'Sala .LAS', '14h30-14h55', 'T1', 'T1-4'),
-('A0039', 'oral', 3, 'Sala .LAS', '14h55-15h20', 'T2', 'T2-3'),
 
 -- Orais Dia 3 - Sala .SEGY
 ('A0018', 'oral', 3, 'Sala .SEGY', '14h30-14h55', 'T1', 'T1-1'),
@@ -190,6 +190,12 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 
 -- Poço das Ideias Activities (available all days)
 ('POCO1', 'poco', 1, NULL, NULL, NULL, NULL),
+
+-- GAMEE Quiz (available all days)
+('GAMEE1', 'gamee', 1, NULL, NULL, NULL, NULL),
+
+-- CAMÁLIS Quiz (available all days)
+('CAMALIS1', 'camalis', 1, NULL, NULL, NULL, NULL),
 
 -- Happy Hour
 ('HH1', 'happyhour', 1, NULL, NULL, NULL, NULL);

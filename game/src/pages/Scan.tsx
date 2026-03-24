@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { getCurrentDay, getTypeLabel, getTypeEmoji, getDayLabel } from '../lib/dayUtils'
+import { getCurrentDay, getTypeLabel, getTypeEmoji, getDayLabel, CANCELLED_EVENTS, EXTENDED_CHECKIN_EVENTS } from '../lib/dayUtils'
 import { POINTS_PER_CHECKIN, MISSIONS } from '../lib/missions'
 
 function Confetti() {
@@ -102,11 +102,21 @@ export default function Scan() {
       return
     }
 
+    // Block cancelled events
+    if (CANCELLED_EVENTS.has(code)) {
+      setState({ status: 'error', message: 'Este evento foi cancelado.' })
+      return
+    }
+
     // Rule 3: Check event day matches current day (skip for SIRR/HH — available all days)
     const today = getCurrentDay()
     if (event.type !== 'sirr' && event.type !== 'happyhour' && event.day !== today) {
-      setState({ status: 'wrong-day', eventId: code, eventDay: event.day })
-      return
+      // Allow extended checkin: events presented on D1 can also be checked in on D2
+      const isExtended = EXTENDED_CHECKIN_EVENTS.has(event.id) && today === 2 && event.day === 1
+      if (!isExtended) {
+        setState({ status: 'wrong-day', eventId: code, eventDay: event.day })
+        return
+      }
     }
 
     // Check duplicate

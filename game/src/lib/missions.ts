@@ -10,7 +10,7 @@ export const POINTS_PER_CHECKIN = 10
 
 interface EventInfo {
   id: string
-  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink' | 'dado' | 'agora' | 'poco'
+  type: 'oral' | 'poster' | 'plenaria' | 'stand' | 'sirr' | 'happyhour' | 'geolink' | 'dado' | 'agora' | 'poco' | 'gamee' | 'camalis'
   day: number
   room: string | null
   track_code: string | null
@@ -65,6 +65,8 @@ function geolinks(c: EventInfo[]) { return c.filter(e => e.type === 'geolink') }
 function dados(c: EventInfo[]) { return c.filter(e => e.type === 'dado') }
 function agoras(c: EventInfo[]) { return c.filter(e => e.type === 'agora') }
 function pocos(c: EventInfo[]) { return c.filter(e => e.type === 'poco') }
+function gamees(c: EventInfo[]) { return c.filter(e => e.type === 'gamee') }
+function camalises(c: EventInfo[]) { return c.filter(e => e.type === 'camalis') }
 
 function uniqueDays(items: { day: number }[]): Set<number> {
   return new Set(items.map(i => i.day))
@@ -100,12 +102,13 @@ export const MISSIONS: Mission[] = [
     category: 'oral',
     points: 40,
     check: (c) => {
-      // Orals per room per day: D1=4, D2=5, D3=2
+      // Orals per room per day (Sala .LAS has no Day 3 orals)
+      const defaultTargets: Record<number, number> = { 1: 4, 2: 5, 3: 2 }
       const counts: Record<string, Record<number, number>> = {}
       const targets: Record<string, Record<number, number>> = {}
       for (const room of ROOMS) {
         counts[room] = { 1: 0, 2: 0, 3: 0 }
-        targets[room] = { 1: 4, 2: 5, 3: 2 }
+        targets[room] = room === 'Sala .LAS' ? { 1: 4, 2: 5, 3: 0 } : { ...defaultTargets }
       }
       for (const e of orals(c)) {
         if (e.room && counts[e.room]) counts[e.room]![e.day]!++
@@ -201,6 +204,33 @@ export const MISSIONS: Mission[] = [
         best = Math.max(best, count)
       }
       return { done: best >= POSTERS_PER_DAY, progress: Math.min(best, POSTERS_PER_DAY), total: POSTERS_PER_DAY }
+    },
+  },
+
+  {
+    id: 'fiel_posters',
+    name: 'Fiel aos Posters',
+    description: 'Ver todos os posters em cada dia do evento',
+    category: 'poster',
+    points: 150,
+    check: (c) => {
+      let daysOk = 0
+      for (const day of [1, 2, 3]) {
+        const count = posters(c).filter(e => e.day === day).length
+        if (count >= POSTERS_PER_DAY) daysOk++
+      }
+      return { done: daysOk >= 3, progress: daysOk, total: 3 }
+    },
+  },
+  {
+    id: 'colecionador_posters',
+    name: 'Colecionador(a) de Posters',
+    description: 'Ver todos os 60 posters do SIDARE',
+    category: 'poster',
+    points: 200,
+    check: (c) => {
+      const count = posters(c).length
+      return { done: count >= 60, progress: Math.min(count, 60), total: 60 }
     },
   },
 
@@ -365,6 +395,29 @@ export const MISSIONS: Mission[] = [
     },
   },
 
+  {
+    id: 'celebridade',
+    name: 'Celebridade',
+    description: 'Encontrar 50 amigos no total',
+    category: 'networking',
+    points: 150,
+    check: (_c, f) => {
+      const total = new Set(f.map(fc => fc.friend_id)).size
+      return { done: total >= 50, progress: Math.min(total, 50), total: 50 }
+    },
+  },
+  {
+    id: 'lenda_social',
+    name: 'Lenda Social',
+    description: 'Encontrar 100 amigos no total',
+    category: 'networking',
+    points: 200,
+    check: (_c, f) => {
+      const total = new Set(f.map(fc => fc.friend_id)).size
+      return { done: total >= 100, progress: Math.min(total, 100), total: 100 }
+    },
+  },
+
   // ─── Trilhas ───
   {
     id: 'ecletico',
@@ -498,6 +551,36 @@ export const MISSIONS: Mission[] = [
       const agoraIds = new Set(agoras(c).map(e => e.id))
       const count = (standIds.has('STAND-1-D3') ? 1 : 0) + (agoraIds.has('AG1') ? 1 : 0) + (agoraIds.has('AG2') ? 1 : 0)
       return { done: count >= 3, progress: count, total: 3 }
+    },
+  },
+
+  // ─── GAMEE ───
+  {
+    id: 'quiz_gamee',
+    name: 'Quiz GAMEE',
+    description: 'Completar o quiz do GAMEE',
+    category: 'stand',
+    points: 100,
+    check: (c) => {
+      const standIds = new Set(c.filter(e => e.type === 'stand').map(e => e.id))
+      const gameeIds = new Set(gamees(c).map(e => e.id))
+      const count = (standIds.has('STAND-2-D2') ? 1 : 0) + (gameeIds.has('GAMEE1') ? 1 : 0)
+      return { done: count >= 2, progress: count, total: 2 }
+    },
+  },
+
+  // ─── CAMÁLIS ───
+  {
+    id: 'quiz_camalis',
+    name: 'Quiz CAMÁLIS',
+    description: 'Completar o quiz do CAMÁLIS',
+    category: 'stand',
+    points: 100,
+    check: (c) => {
+      const standIds = new Set(c.filter(e => e.type === 'stand').map(e => e.id))
+      const camalisIds = new Set(camalises(c).map(e => e.id))
+      const count = (standIds.has('STAND-2-D2') ? 1 : 0) + (camalisIds.has('CAMALIS1') ? 1 : 0)
+      return { done: count >= 2, progress: count, total: 2 }
     },
   },
 

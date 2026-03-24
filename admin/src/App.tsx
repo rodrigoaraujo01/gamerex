@@ -33,13 +33,16 @@ const COORDINATOR_EMAILS = [
 
 const ROOMS = ['Auditório', 'Sala .DAT', 'Sala .LAS', 'Sala .SEGY']
 
+// Events cancelled — ignore any checkins on these QR codes
+const CANCELLED_EVENTS = new Set(['A0006', 'A0022'])
+
 const MISSIONS: MissionDef[] = [
   { id: 'turista_salas', name: 'Turista das Salas', points: 50, check: (c) => {
     for (const d of [1,2,3]) { const rooms = new Set(c.filter(e=>e.type==='oral'&&e.day===d).map(e=>e.room).filter(Boolean)); if(rooms.size>=4) return true }; return false
   }},
   { id: 'maratonista', name: 'Maratonista', points: 40, check: (c) => {
-    const targets: Record<number,number> = {1:4,2:5,3:2}
-    for (const r of ROOMS) for (const d of [1,2,3]) { if(c.filter(e=>e.type==='oral'&&e.day===d&&e.room===r).length>=(targets[d]??0)) return true }; return false
+    const targets: Record<string,Record<number,number>> = {}; for(const r of ROOMS) targets[r] = r==='Sala .LAS' ? {1:4,2:5,3:0} : {1:4,2:5,3:2}
+    for (const r of ROOMS) for (const d of [1,2,3]) { const t=targets[r]![d]!; if(t>0&&c.filter(e=>e.type==='oral'&&e.day===d&&e.room===r).length>=t) return true }; return false
   }},
   { id: 'fiel_orais', name: 'Fiel às Orais', points: 30, check: (c) => new Set(c.filter(e=>e.type==='oral').map(e=>e.day)).size>=3 },
   { id: 'curioso', name: 'Curioso(a)', points: 30, check: (c) => new Set(c.filter(e=>e.type==='poster').map(e=>e.day)).size>=3 },
@@ -51,12 +54,16 @@ const MISSIONS: MissionDef[] = [
   { id: 'tour_completo', name: 'Tour Completo', points: 40, check: (c) => { for(const d of[1,2,3]) if(new Set(c.filter(e=>e.type==='stand'&&e.day===d).map(e=>e.room)).size>=3)return true;return false }},
   { id: 'fiel_expo', name: 'Fiel da Expo', points: 40, check: (c) => new Set(c.filter(e=>e.type==='stand').map(e=>e.day)).size>=3 },
   { id: 'expert_expo', name: 'Expert da Expo', points: 80, check: (c) => c.filter(e=>e.type==='stand').length>=9 },
+  { id: 'fiel_posters', name: 'Fiel aos Posters', points: 150, check: (c) => { let ok=0; for(const d of[1,2,3]) if(c.filter(e=>e.type==='poster'&&e.day===d).length>=20) ok++; return ok>=3 }},
+  { id: 'colecionador_posters', name: 'Colecionador(a) de Posters', points: 200, check: (c) => c.filter(e=>e.type==='poster').length>=60 },
   { id: 'sirr_expert', name: 'SIRR Expert', points: 100, check: (c) => c.filter(e=>e.type==='sirr').length>=4 },
   { id: 'geolinker', name: 'GeoLinker', points: 100, check: (c) => { const ids=new Set(c.filter(e=>e.type==='geolink').map(e=>e.id)); return['GL1','GL2','GL3'].every(id=>ids.has(id)) }},
   { id: 'explorador_geolink', name: 'Explorador de Soluções do GeoLink', points: 100, check: (c) => { const ids=new Set(c.filter(e=>e.type==='geolink').map(e=>e.id)); return['GL4','GL5','GL6','GL7'].every(id=>ids.has(id)) }},
   { id: 'cacando_dado', name: 'Caçando o Dado', points: 100, check: (c) => { const ids=new Set(c.filter(e=>e.type==='dado').map(e=>e.id)); return['CD1','CD2','CD3'].every(id=>ids.has(id)) }},
   { id: 'poco_ideias', name: 'Poço das ideias', points: 100, check: (c) => { const sIds=new Set(c.filter(e=>e.type==='stand').map(e=>e.id)); const pIds=new Set(c.filter(e=>e.type==='poco').map(e=>e.id)); return sIds.has('STAND-2-D1')&&pIds.has('POCO1') }},
   { id: 'fui_em_atenas', name: 'Fui em Atenas e voltei', points: 100, check: (c) => { const sIds=new Set(c.filter(e=>e.type==='stand').map(e=>e.id)); const aIds=new Set(c.filter(e=>e.type==='agora').map(e=>e.id)); return sIds.has('STAND-1-D3')&&aIds.has('AG1')&&aIds.has('AG2') }},
+  { id: 'quiz_gamee', name: 'Quiz GAMEE', points: 100, check: (c) => { const sIds=new Set(c.filter(e=>e.type==='stand').map(e=>e.id)); const gIds=new Set(c.filter(e=>e.type==='gamee').map(e=>e.id)); return sIds.has('STAND-2-D2')&&gIds.has('GAMEE1') }},
+  { id: 'quiz_camalis', name: 'Quiz CAMÁLIS', points: 100, check: (c) => { const sIds=new Set(c.filter(e=>e.type==='stand').map(e=>e.id)); const cIds=new Set(c.filter(e=>e.type==='camalis').map(e=>e.id)); return sIds.has('STAND-2-D2')&&cIds.has('CAMALIS1') }},
   { id: 'happy_hour', name: 'Do Dado ao Barril', points: 50, check: (c) => c.filter(e=>e.type==='happyhour').length>=1 },
   { id: 'lideres_supremas', name: 'Líderes Supremas', points: 100, check: (_c,f,coordIds) => {
     if(!coordIds || coordIds.size===0) return false
@@ -70,6 +77,8 @@ const MISSIONS: MissionDef[] = [
   { id: 'networker', name: 'Networker', points: 50, check: (_c,f) => { for(const d of[1,2,3]) if(new Set(f.filter(x=>x.day===d).map(x=>x.friend_id)).size>=10) return true;return false }},
   { id: 'influencer', name: 'Influencer', points: 100, check: (_c,f) => { for(const d of[1,2,3]) if(new Set(f.filter(x=>x.day===d).map(x=>x.friend_id)).size>=20) return true;return false }},
   { id: 'super_conector', name: 'Super Conector(a)', points: 80, check: (_c,f) => { let ok=0; for(const d of[1,2,3]) if(new Set(f.filter(x=>x.day===d).map(x=>x.friend_id)).size>=5) ok++; return ok>=3 }},
+  { id: 'celebridade', name: 'Celebridade', points: 150, check: (_c:EventInfo[],f:FriendInfo[]) => new Set(f.map(x=>x.friend_id)).size>=50 },
+  { id: 'lenda_social', name: 'Lenda Social', points: 200, check: (_c:EventInfo[],f:FriendInfo[]) => new Set(f.map(x=>x.friend_id)).size>=100 },
   { id: 'ecletico', name: 'Eclético(a)', points: 30, check: (c) => { const t=new Set(c.filter(e=>e.track_code).map(e=>e.track_code)); return['T1','T2','T3'].every(x=>t.has(x)) }},
   { id: 'guru_ia', name: 'Guru de IA', points: 60, check: (c) => { const s=new Set(c.filter(e=>e.subtrilha?.startsWith('T1')).map(e=>e.subtrilha)); return['T1-1','T1-2','T1-3','T1-4'].every(x=>s.has(x)) }},
   { id: 'mestre_dados', name: 'Mestre dos Dados', points: 60, check: (c) => { const s=new Set(c.filter(e=>e.subtrilha?.startsWith('T2')).map(e=>e.subtrilha)); return['T2-1','T2-2','T2-3'].every(x=>s.has(x)) }},
@@ -174,7 +183,7 @@ export default function App() {
     const eventMap = new Map(events.map(e => [e.id, e]))
 
     return users.map(u => {
-      const userCheckins = checkins.filter(c => c.user_id === u.id)
+      const userCheckins = checkins.filter(c => c.user_id === u.id && !CANCELLED_EVENTS.has(c.event_id))
       const userFriends = friendCheckins.filter(f => f.user_id === u.id)
       const eventInfos = userCheckins.map(c => eventMap.get(c.event_id)).filter(Boolean) as EventInfo[]
       const friendInfos = userFriends.map(f => ({ friend_id: f.friend_id, day: f.day }))

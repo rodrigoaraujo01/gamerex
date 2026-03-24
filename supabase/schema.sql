@@ -4,7 +4,7 @@
 -- Events table (pre-populated, no titles for confidentiality)
 CREATE TABLE events (
   id TEXT PRIMARY KEY,
-  type TEXT NOT NULL CHECK (type IN ('oral', 'poster', 'plenaria', 'stand', 'sirr', 'happyhour', 'geolink', 'dado', 'agora', 'poco')),
+  type TEXT NOT NULL CHECK (type IN ('oral', 'poster', 'plenaria', 'stand', 'sirr', 'happyhour', 'geolink', 'dado', 'agora', 'poco', 'gamee', 'camalis')),
   day INT NOT NULL CHECK (day BETWEEN 1 AND 3),
   room TEXT,
   time_slot TEXT,

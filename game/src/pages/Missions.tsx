@@ -176,6 +176,22 @@ function getMissionSteps(id: string, events: EventInfo[], friends: FriendInfo[],
         { label: 'Trazer um amigo para o Ágora', done: agoraIds.has('AG2') },
       ]
     }
+    case 'quiz_gamee': {
+      const standIds = new Set(byType('stand').map(e => e.id))
+      const gameeIds = new Set(byType('gamee').map(e => e.id))
+      return [
+        { label: 'Visitar o Stand 2 no Dia 2', done: standIds.has('STAND-2-D2') },
+        { label: 'Resolver o quiz do GAMEE', done: gameeIds.has('GAMEE1') },
+      ]
+    }
+    case 'quiz_camalis': {
+      const standIds2 = new Set(byType('stand').map(e => e.id))
+      const camalisIds = new Set(byType('camalis').map(e => e.id))
+      return [
+        { label: 'Visitar o Stand 2 no Dia 2', done: standIds2.has('STAND-2-D2') },
+        { label: 'Resolver o quiz do CAMÁLIS', done: camalisIds.has('CAMALIS1') },
+      ]
+    }
     case 'lideres_supremas': {
       if (!coordinators || coordinators.length === 0) return null
       const metIds = new Set(friends.map(f => f.friend_id))

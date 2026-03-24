@@ -4,6 +4,13 @@ const EVENT_DATES: Record<number, string> = {
   3: '2026-03-25',
 }
 
+// Events cancelled — ignore any checkins on these QR codes
+export const CANCELLED_EVENTS = new Set(['A0006', 'A0022'])
+
+// Events presented on day 1 (23/03) but with checkin extended to day 2 (24/03)
+// They still count for their day 1 time slots for conflict checking
+export const EXTENDED_CHECKIN_EVENTS = new Set(['A0041', 'A0014', 'A0034'])
+
 export function getCurrentDay(): number {
   const today = new Date().toISOString().slice(0, 10)
   for (const [day, date] of Object.entries(EVENT_DATES)) {

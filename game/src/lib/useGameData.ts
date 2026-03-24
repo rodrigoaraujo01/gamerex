@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useAuth } from './auth'
 import { MISSIONS, POINTS_PER_CHECKIN, calculateTotalPoints, COORDINATOR_EMAILS, type Mission, type MissionContext } from './missions'
 import { supabase, type EventRow } from './supabase'
+import { CANCELLED_EVENTS } from './dayUtils'
 
 export interface MissionResult extends Mission {
   result: { done: boolean; progress: number; total: number }
@@ -34,8 +35,15 @@ export function useGameData() {
   )
 
   const checkinEvents = useMemo(() =>
-    checkins.map(c => eventInfoMap.get(c.event_id)).filter(Boolean) as EventRow[],
+    checkins
+      .filter(c => !CANCELLED_EVENTS.has(c.event_id))
+      .map(c => eventInfoMap.get(c.event_id)).filter(Boolean) as EventRow[],
     [checkins, eventInfoMap]
+  )
+
+  const validCheckins = useMemo(() =>
+    checkins.filter(c => !CANCELLED_EVENTS.has(c.event_id)),
+    [checkins]
   )
 
   const friendInfos = useMemo((): FriendInfo[] =>
@@ -44,8 +52,8 @@ export function useGameData() {
   )
 
   const totalPoints = useMemo(() =>
-    calculateTotalPoints(checkins, friendCheckins, checkinEvents as any, friendInfos, missionCtx),
-    [checkins, friendCheckins, checkinEvents, friendInfos, missionCtx]
+    calculateTotalPoints(validCheckins, friendCheckins, checkinEvents as any, friendInfos, missionCtx),
+    [validCheckins, friendCheckins, checkinEvents, friendInfos, missionCtx]
   )
 
   const missionResults = useMemo((): MissionResult[] =>
