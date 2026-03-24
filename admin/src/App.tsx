@@ -144,7 +144,7 @@ function LoginGate({ onAuth }: { onAuth: () => void }) {
 }
 
 // ── Admin Dashboard ──
-type Tab = 'dashboard' | 'users' | 'checkins' | 'ranking'
+type Tab = 'dashboard' | 'users' | 'checkins' | 'ranking' | 'charts'
 
 export default function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem('admin_auth') === '1')
@@ -322,7 +322,7 @@ export default function App() {
           <h1 className="text-lg font-bold text-gray-900">🦖 GameREX Admin</h1>
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {(['dashboard', 'users', 'checkins', 'ranking'] as Tab[]).map(t => (
+            {(['dashboard', 'users', 'checkins', 'ranking', 'charts'] as Tab[]).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -353,7 +353,7 @@ export default function App() {
         {/* Mobile dropdown */}
         {menuOpen && (
           <nav className="md:hidden border-t bg-white px-4 py-2 flex flex-col gap-1">
-            {(['dashboard', 'users', 'checkins', 'ranking'] as Tab[]).map(t => (
+            {(['dashboard', 'users', 'checkins', 'ranking', 'charts'] as Tab[]).map(t => (
               <button
                 key={t}
                 onClick={() => { setTab(t); setMenuOpen(false) }}
@@ -519,6 +519,11 @@ export default function App() {
                 </div>
               </div>
             )}
+
+            {/* Charts */}
+            {tab === 'charts' && (
+              <ChartsTab checkins={checkins} friendCheckins={friendCheckins} events={events} />
+            )}
           </>
         )}
       </main>
@@ -640,6 +645,120 @@ function UserDetailTabs({ data }: { data: UserDetailData }) {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function ChartsTab({ checkins, friendCheckins, events }: { checkins: Checkin[]; friendCheckins: FriendCheckin[]; events: EventInfo[] }) {
+  const eventMap = useMemo(() => new Map<string, EventInfo>(events.map(e => [e.id, e])), [events])
+
+  const data = useMemo(() => {
+    return [1, 2, 3].map(day => {
+      const dayCheckins = checkins.filter(c => {
+        const ev = eventMap.get(c.event_id)
+        return ev && ev.day === day && !CANCELLED_EVENTS.has(c.event_id)
+      })
+      const orais = dayCheckins.filter(c => eventMap.get(c.event_id)?.type === 'oral').length
+      const posters = dayCheckins.filter(c => eventMap.get(c.event_id)?.type === 'poster').length
+      const outros = dayCheckins.length - orais - posters
+      const amigos = friendCheckins.filter(f => f.day === day).length
+      return { day, orais, posters, outros, amigos, totalEventos: dayCheckins.length }
+    })
+  }, [checkins, friendCheckins, eventMap])
+
+  const maxVal = Math.max(1, ...data.flatMap(d => [d.orais, d.posters, d.outros, d.amigos]))
+
+  const dayLabel = (d: number) => `Dia ${d} (${22 + d}/mar)`
+
+  const categories = [
+    { key: 'orais' as const, label: 'Orais', color: 'bg-blue-500', textColor: 'text-blue-700' },
+    { key: 'posters' as const, label: 'Posters', color: 'bg-amber-500', textColor: 'text-amber-700' },
+    { key: 'outros' as const, label: 'Outros eventos', color: 'bg-emerald-500', textColor: 'text-emerald-700' },
+    { key: 'amigos' as const, label: 'Amigos', color: 'bg-purple-500', textColor: 'text-purple-700' },
+  ]
+
+  return (
+    <div className="space-y-8">
+      {/* Legend */}
+      <div className="flex flex-wrap gap-4">
+        {categories.map(cat => (
+          <div key={cat.key} className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-sm ${cat.color}`} />
+            <span className="text-sm text-gray-600">{cat.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Per-day charts */}
+      {data.map(d => (
+        <div key={d.day} className="bg-white rounded-xl border p-5">
+          <h3 className="font-semibold text-gray-800 mb-1">{dayLabel(d.day)}</h3>
+          <p className="text-xs text-gray-400 mb-4">{d.totalEventos} checkins em eventos · {d.amigos} checkins de amigos</p>
+          <div className="space-y-3">
+            {categories.map(cat => {
+              const val = d[cat.key]
+              const pct = maxVal > 0 ? (val / maxVal) * 100 : 0
+              return (
+                <div key={cat.key} className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-28 text-right shrink-0">{cat.label}</span>
+                  <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                    <div
+                      className={`${cat.color} h-full rounded-full flex items-center justify-end pr-2 transition-all duration-500`}
+                      style={{ width: `${Math.max(pct, val > 0 ? 3 : 0)}%` }}
+                    >
+                      {pct > 8 && <span className="text-xs font-bold text-white">{val}</span>}
+                    </div>
+                  </div>
+                  {pct <= 8 && <span className={`text-xs font-bold ${cat.textColor} w-8`}>{val}</span>}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Stacked summary */}
+      <div className="bg-white rounded-xl border p-5">
+        <h3 className="font-semibold text-gray-800 mb-4">Visão Geral — Checkins por Dia</h3>
+        <div className="space-y-4">
+          {data.map(d => {
+            const total = d.orais + d.posters + d.outros + d.amigos
+            if (total === 0) return (
+              <div key={d.day} className="flex items-center gap-3">
+                <span className="text-sm text-gray-500 w-24 text-right shrink-0">{dayLabel(d.day)}</span>
+                <div className="flex-1 bg-gray-100 rounded-full h-8">
+                  <span className="text-xs text-gray-400 flex items-center h-full pl-3">Sem dados</span>
+                </div>
+              </div>
+            )
+            return (
+              <div key={d.day}>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500 w-24 text-right shrink-0">{dayLabel(d.day)}</span>
+                  <div className="flex-1 bg-gray-100 rounded-full h-8 overflow-hidden flex">
+                    {categories.map(cat => {
+                      const val = d[cat.key]
+                      const pct = (val / total) * 100
+                      if (val === 0) return null
+                      return (
+                        <div
+                          key={cat.key}
+                          className={`${cat.color} h-full flex items-center justify-center transition-all duration-500`}
+                          style={{ width: `${pct}%` }}
+                          title={`${cat.label}: ${val}`}
+                        >
+                          {pct > 10 && <span className="text-xs font-bold text-white">{val}</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <span className="text-sm font-bold text-gray-600 w-10 text-right">{total}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
