@@ -52,8 +52,12 @@ const T1_SUBS = ['T1-1', 'T1-2', 'T1-3', 'T1-4']
 const T2_SUBS = ['T2-1', 'T2-2', 'T2-3']
 const T3_SUBS = ['T3-1', 'T3-2', 'T3-3', 'T3-4', 'T3-5']
 
-// Count posters per day in our data: 20 each
-const POSTERS_PER_DAY = 20
+// Count posters per day in our data
+const POSTERS_D1 = 20
+const POSTERS_D2 = 20
+const POSTERS_D3 = 19
+const POSTERS_TOTAL = 59
+const POSTERS_PER_DAY: Record<number, number> = { 1: POSTERS_D1, 2: POSTERS_D2, 3: POSTERS_D3 }
 
 function orals(c: EventInfo[]) { return c.filter(e => e.type === 'oral') }
 function posters(c: EventInfo[]) { return c.filter(e => e.type === 'poster') }
@@ -194,61 +198,64 @@ export const MISSIONS: Mission[] = [
   {
     id: 'mestre_posters',
     name: 'Mestre dos Posters',
-    description: `Ver todos os ${POSTERS_PER_DAY} posters de 1 dia`,
+    description: 'Ver todos os posters de 1 dia',
     category: 'poster',
     points: 100,
     check: (c) => {
       let best = 0
+      let bestTarget = POSTERS_D1
       for (const day of [1, 2, 3]) {
         const count = posters(c).filter(e => e.day === day).length
-        best = Math.max(best, count)
+        const target = POSTERS_PER_DAY[day]!
+        if (count >= target && target > 0) return { done: true, progress: target, total: target }
+        if (count > best) { best = count; bestTarget = target }
       }
-      return { done: best >= POSTERS_PER_DAY, progress: Math.min(best, POSTERS_PER_DAY), total: POSTERS_PER_DAY }
+      return { done: false, progress: Math.min(best, bestTarget), total: bestTarget }
     },
   },
 
   {
     id: 'fiel_posters_d1',
     name: 'Fiel aos Posters — Dia 1',
-    description: 'Ver todos os 20 posters do dia 1',
+    description: `Ver todos os ${POSTERS_D1} posters do dia 1`,
     category: 'poster',
     points: 50,
     check: (c) => {
       const count = posters(c).filter(e => e.day === 1).length
-      return { done: count >= POSTERS_PER_DAY, progress: Math.min(count, POSTERS_PER_DAY), total: POSTERS_PER_DAY }
+      return { done: count >= POSTERS_D1, progress: Math.min(count, POSTERS_D1), total: POSTERS_D1 }
     },
   },
   {
     id: 'fiel_posters_d2',
     name: 'Fiel aos Posters — Dia 2',
-    description: 'Ver todos os 20 posters do dia 2',
+    description: `Ver todos os ${POSTERS_D2} posters do dia 2`,
     category: 'poster',
     points: 50,
     check: (c) => {
       const count = posters(c).filter(e => e.day === 2).length
-      return { done: count >= POSTERS_PER_DAY, progress: Math.min(count, POSTERS_PER_DAY), total: POSTERS_PER_DAY }
+      return { done: count >= POSTERS_D2, progress: Math.min(count, POSTERS_D2), total: POSTERS_D2 }
     },
   },
   {
     id: 'fiel_posters_d3',
     name: 'Fiel aos Posters — Dia 3',
-    description: 'Ver todos os 20 posters do dia 3',
+    description: `Ver todos os ${POSTERS_D3} posters do dia 3`,
     category: 'poster',
     points: 50,
     check: (c) => {
       const count = posters(c).filter(e => e.day === 3).length
-      return { done: count >= POSTERS_PER_DAY, progress: Math.min(count, POSTERS_PER_DAY), total: POSTERS_PER_DAY }
+      return { done: count >= POSTERS_D3, progress: Math.min(count, POSTERS_D3), total: POSTERS_D3 }
     },
   },
   {
     id: 'colecionador_posters',
     name: 'Colecionador(a) de Posters',
-    description: 'Ver todos os 60 posters do SIDARE',
+    description: `Ver todos os ${POSTERS_TOTAL} posters do SIDARE`,
     category: 'poster',
     points: 200,
     check: (c) => {
       const count = posters(c).length
-      return { done: count >= 60, progress: Math.min(count, 60), total: 60 }
+      return { done: count >= POSTERS_TOTAL, progress: Math.min(count, POSTERS_TOTAL), total: POSTERS_TOTAL }
     },
   },
 

@@ -1,4 +1,4 @@
--- GameRex Seed Data: 116 events (no titles for confidentiality)
+-- GameRex Seed Data: 115 events (no titles for confidentiality)
 -- Subtrilha codes:
 --   T1-1: Aplicações de IA (Geração/Interpretação/Processamento)
 --   T1-2: Chats e Agentes
@@ -130,7 +130,6 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('P0055', 'poster', 2, NULL, '13h30-14h30', 'T3', 'T3-3'),
 ('P0050', 'poster', 2, NULL, '13h30-14h30', 'T1', 'T1-1'),
 ('P0053', 'poster', 2, NULL, '13h30-14h30', 'T2', 'T2-1'),
-('P0058', 'poster', 2, NULL, '13h30-14h30', 'T3', 'T3-1'),
 ('P0046', 'poster', 2, NULL, '13h30-14h30', 'T2', 'T2-3'),
 ('P0017', 'poster', 2, NULL, '13h30-14h30', 'T1', 'T1-1'),
 ('P0005', 'poster', 2, NULL, '13h30-14h30', 'T1', 'T1-1'),
@@ -159,7 +158,7 @@ INSERT INTO events (id, type, day, room, time_slot, track_code, subtrilha) VALUE
 ('P0018', 'poster', 3, NULL, '13h30-14h30', 'T1', 'T1-4'),
 ('P0047', 'poster', 3, NULL, '13h30-14h30', 'T2', 'T2-3'),
 ('P0030', 'poster', 3, NULL, '13h30-14h30', 'T1', 'T1-2'),
-('P0051', 'poster', 3, NULL, '13h30-14h30', 'T2', 'T2-2'),
+('P0051', 'poster', 2, NULL, '13h30-14h30', 'T2', 'T2-2'),
 ('P0003', 'poster', 3, NULL, '13h30-14h30', 'T1', 'T1-1'),
 ('P0021', 'poster', 3, NULL, '13h30-14h30', 'T1', 'T1-1'),
 ('P0037', 'poster', 3, NULL, '13h30-14h30', 'T2', 'T2-2'),

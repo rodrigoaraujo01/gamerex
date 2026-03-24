@@ -29,5 +29,14 @@ WHERE id = 'A0039';
 -- A0006 and A0022 remain in DB (for FK integrity) but are handled as cancelled in app code
 -- No DB changes needed for them — the app blocks checkins and ignores existing ones
 
+-- ── Poster changes (2026-03-24) ──
+
+-- P0058: Cancelled — delete checkins first (FK), then the event
+DELETE FROM checkins WHERE event_id = 'P0058';
+DELETE FROM events WHERE id = 'P0058';
+
+-- P0051: Moved from Day 3 → Day 2
+UPDATE events SET day = 2 WHERE id = 'P0051';
+
 -- Delete any existing checkins on cancelled events
 DELETE FROM checkins WHERE event_id IN ('A0006', 'A0022');
