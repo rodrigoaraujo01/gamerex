@@ -20,6 +20,16 @@ export function getCurrentDay(): number {
   return 1
 }
 
+/** Check-ins close at 15:20 on the last day (day 3) */
+export function isEventOver(): boolean {
+  const now = new Date()
+  const today = now.toISOString().slice(0, 10)
+  if (today !== EVENT_DATES[3]) return false
+  const hours = now.getHours()
+  const minutes = now.getMinutes()
+  return hours > 15 || (hours === 15 && minutes >= 20)
+}
+
 export function getDayLabel(day: number): string {
   const labels: Record<number, string> = {
     1: '23/mar (seg)',

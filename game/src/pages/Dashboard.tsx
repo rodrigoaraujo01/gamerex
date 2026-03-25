@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { POINTS_PER_CHECKIN, getPlayerLevel } from '../lib/missions'
 import { useGameData } from '../lib/useGameData'
-import { getTypeEmoji, getTrackLabel } from '../lib/dayUtils'
+import { getTypeEmoji, getTrackLabel, isEventOver } from '../lib/dayUtils'
+import { supabase } from '../lib/supabase'
 import Navbar from '../components/Navbar'
 
 export default function Dashboard() {
@@ -16,7 +17,44 @@ export default function Dashboard() {
     nextMission,
   } = useGameData()
 
+  const [eventOver, setEventOver] = useState(isEventOver)
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [ratingSubmitted, setRatingSubmitted] = useState(false)
+  const [ratingLoading, setRatingLoading] = useState(false)
+
   useEffect(() => { refreshData() }, [refreshData])
+
+  // Check event end every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => setEventOver(isEventOver()), 30_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Check if user already submitted a rating
+  useEffect(() => {
+    if (!user || !eventOver) return
+    supabase
+      .from('ratings')
+      .select('id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) setRatingSubmitted(true)
+      })
+  }, [user, eventOver])
+
+  const submitRating = async () => {
+    if (!user || rating === 0) return
+    setRatingLoading(true)
+    await supabase.from('ratings').insert({
+      user_id: user.id,
+      stars: rating,
+      comment: comment.trim() || null,
+    })
+    setRatingSubmitted(true)
+    setRatingLoading(false)
+  }
 
   const level = useMemo(() => getPlayerLevel(totalPoints), [totalPoints])
 
@@ -56,6 +94,61 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
+        {/* Event over: thank you + rating */}
+        {eventOver && (
+          <div className="bg-rex-card border border-rex-green/40 rounded-2xl p-5 text-center">
+            <p className="text-3xl mb-2">🎉</p>
+            <h2 className="text-white font-semibold text-lg mb-1">Obrigado por participar!</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              O GameREX está chegando ao fim. Foi ótimo ter você com a gente! 🦖
+            </p>
+            {!ratingSubmitted ? (
+              <div className="bg-rex-bg border border-rex-border rounded-xl p-4">
+                <p className="text-gray-300 text-sm mb-3">Avalie o GameREX:</p>
+                <div className="flex justify-center gap-2 mb-3">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      onClick={() => setRating(star)}
+                      className="text-3xl transition-transform hover:scale-110 focus:outline-none"
+                    >
+                      {star <= rating ? '⭐' : '☆'}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  placeholder="Comentário (opcional)"
+                  maxLength={500}
+                  className="w-full bg-rex-card border border-rex-border rounded-lg p-3 text-white text-sm placeholder-gray-600 resize-none focus:border-rex-green/50 focus:outline-none"
+                  rows={3}
+                />
+                <button
+                  onClick={submitRating}
+                  disabled={rating === 0 || ratingLoading}
+                  className="mt-3 w-full bg-rex-green text-rex-bg font-semibold py-2.5 rounded-xl disabled:opacity-40 transition-opacity"
+                >
+                  {ratingLoading ? 'Enviando...' : 'Enviar Avaliação'}
+                </button>
+              </div>
+            ) : (
+              <div className="bg-rex-bg border border-rex-green/30 rounded-xl p-4">
+                <p className="text-rex-green text-sm">✅ Avaliação enviada! Obrigado pelo feedback.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Deadline notice (before event ends) */}
+        {!eventOver && (
+          <div className="bg-rex-card border border-rex-amber/30 rounded-xl px-4 py-3 flex items-center gap-3">
+            <span className="text-lg">⏰</span>
+            <p className="text-gray-300 text-sm">
+              Os check-ins encerram às <span className="text-rex-amber font-semibold">15h20</span>. Escaneie seus QR Codes antes disso!
+            </p>
+          </div>
+        )}
         {/* Points card + level progress */}
         <div className="bg-rex-card border border-rex-border rounded-2xl p-5 text-center shimmer">
           <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Pontuação Total</p>

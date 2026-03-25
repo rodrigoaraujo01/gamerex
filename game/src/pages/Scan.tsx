@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { getCurrentDay, getTypeLabel, getTypeEmoji, getDayLabel, CANCELLED_EVENTS, EXTENDED_CHECKIN_EVENTS } from '../lib/dayUtils'
+import { getCurrentDay, getTypeLabel, getTypeEmoji, getDayLabel, CANCELLED_EVENTS, EXTENDED_CHECKIN_EVENTS, isEventOver } from '../lib/dayUtils'
 import { POINTS_PER_CHECKIN, MISSIONS } from '../lib/missions'
 
 function Confetti() {
@@ -50,6 +50,12 @@ export default function Scan() {
     if (!code || !user) return
     if (processedRef.current) return
     processedRef.current = true
+
+    // Block all check-ins after event end (15:20 on day 3)
+    if (isEventOver()) {
+      setState({ status: 'error', message: 'O evento encerrou! Os check-ins foram fechados às 15h20.' })
+      return
+    }
 
     // Friend scan
     if (code.startsWith('U-')) {
