@@ -120,6 +120,7 @@ const ALL_MISSIONS: MissionDef[] = [
 interface User { id: string; name: string; email: string; is_online: boolean; created_at: string }
 interface Checkin { id: string; user_id: string; event_id: string; created_at: string }
 interface FriendCheckin { id: string; user_id: string; friend_id: string; day: number; created_at: string }
+interface Rating { id: string; user_id: string; stars: number; comment: string | null; created_at: string }
 
 // ── Password Gate ──
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? 'sidare2026'
@@ -160,7 +161,7 @@ function LoginGate({ onAuth }: { onAuth: () => void }) {
 }
 
 // ── Admin Dashboard ──
-type Tab = 'dashboard' | 'users' | 'checkins' | 'ranking' | 'charts'
+type Tab = 'dashboard' | 'users' | 'checkins' | 'ranking' | 'charts' | 'ratings'
 
 export default function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem('admin_auth') === '1')
@@ -169,20 +170,23 @@ export default function App() {
   const [checkins, setCheckins] = useState<Checkin[]>([])
   const [friendCheckins, setFriendCheckins] = useState<FriendCheckin[]>([])
   const [events, setEvents] = useState<EventInfo[]>([])
+  const [ratings, setRatings] = useState<Rating[]>([])
   const [loading, setLoading] = useState(true)
 
   const loadData = useCallback(async () => {
     setLoading(true)
-    const [u, c, f, e] = await Promise.all([
+    const [u, c, f, e, r] = await Promise.all([
       fetchAll<User>('users', 'created_at', false),
       fetchAll<Checkin>('checkins', 'created_at', false),
       fetchAll<FriendCheckin>('friend_checkins'),
       fetchAll<EventInfo>('events'),
+      fetchAll<Rating>('ratings', 'created_at', false),
     ])
     setUsers(u)
     setCheckins(c)
     setFriendCheckins(f)
     setEvents(e)
+    setRatings(r)
     setLoading(false)
   }, [])
 
@@ -540,6 +544,11 @@ export default function App() {
             {tab === 'charts' && (
               <ChartsTab checkins={checkins} friendCheckins={friendCheckins} events={events} />
             )}
+
+            {/* Ratings */}
+            {tab === 'ratings' && (
+              <RatingsTab ratings={ratings} users={users} />
+            )}
           </>
         )}
       </main>
@@ -776,6 +785,109 @@ function ChartsTab({ checkins, friendCheckins, events }: { checkins: Checkin[]; 
           })}
         </div>
       </div>
+    </div>
+  )
+}
+
+function RatingsTab({ ratings, users }: { ratings: Rating[]; users: User[] }) {
+  const userMap = useMemo(() => new Map(users.map(u => [u.id, u])), [users])
+
+  const stats = useMemo(() => {
+    if (ratings.length === 0) return null
+    const total = ratings.length
+    const avg = ratings.reduce((s, r) => s + r.stars, 0) / total
+    const dist = [0, 0, 0, 0, 0]
+    for (const r of ratings) dist[r.stars - 1]++
+    const withComment = ratings.filter(r => r.comment && r.comment.trim().length > 0)
+    return { total, avg, dist, withComment }
+  }, [ratings])
+
+  if (!stats) {
+    return (
+      <div className="text-center py-12 text-gray-400">
+        <p className="text-4xl mb-3">⭐</p>
+        <p>Nenhuma avaliação recebida ainda.</p>
+      </div>
+    )
+  }
+
+  const maxDist = Math.max(1, ...stats.dist)
+
+  return (
+    <div className="space-y-6">
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border p-4">
+          <p className="text-sm text-gray-500">Avaliações</p>
+          <p className="text-2xl font-bold">{stats.total}</p>
+        </div>
+        <div className="bg-white rounded-xl border p-4">
+          <p className="text-sm text-gray-500">Média</p>
+          <p className="text-2xl font-bold text-amber-600">{stats.avg.toFixed(1)} ⭐</p>
+        </div>
+        <div className="bg-white rounded-xl border p-4">
+          <p className="text-sm text-gray-500">Com comentário</p>
+          <p className="text-2xl font-bold">{stats.withComment.length}</p>
+        </div>
+        <div className="bg-white rounded-xl border p-4">
+          <p className="text-sm text-gray-500">Taxa de resposta</p>
+          <p className="text-2xl font-bold">{((stats.total / users.length) * 100).toFixed(0)}%</p>
+        </div>
+      </div>
+
+      {/* Star distribution */}
+      <div className="bg-white rounded-xl border p-5">
+        <h3 className="font-semibold text-gray-800 mb-4">Distribuição das Estrelas</h3>
+        <div className="space-y-3">
+          {[5, 4, 3, 2, 1].map(star => {
+            const count = stats.dist[star - 1]
+            const pct = (count / maxDist) * 100
+            return (
+              <div key={star} className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 w-12 text-right shrink-0">{star} ⭐</span>
+                <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                  <div
+                    className="bg-amber-400 h-full rounded-full flex items-center justify-end pr-2 transition-all duration-500"
+                    style={{ width: `${Math.max(pct, count > 0 ? 3 : 0)}%` }}
+                  >
+                    {pct > 10 && <span className="text-xs font-bold text-white">{count}</span>}
+                  </div>
+                </div>
+                {pct <= 10 && <span className="text-xs font-bold text-amber-700 w-8">{count}</span>}
+                <span className="text-xs text-gray-400 w-10 text-right">
+                  {((count / stats.total) * 100).toFixed(0)}%
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Comments */}
+      {stats.withComment.length > 0 && (
+        <div className="bg-white rounded-xl border p-5">
+          <h3 className="font-semibold text-gray-800 mb-4">Comentários ({stats.withComment.length})</h3>
+          <div className="space-y-3">
+            {stats.withComment.map(r => {
+              const user = userMap.get(r.user_id)
+              return (
+                <div key={r.id} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-800">{user?.name ?? 'Anônimo'}</span>
+                      <span className="text-xs text-amber-600">{'⭐'.repeat(r.stars)}</span>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {new Date(r.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">{r.comment}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
