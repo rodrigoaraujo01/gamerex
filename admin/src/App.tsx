@@ -692,6 +692,34 @@ function ChartsTab({ checkins, friendCheckins, events }: { checkins: Checkin[]; 
     })
   }, [checkins, friendCheckins, eventMap])
 
+  // Timeline data: checkins per hour, per day
+  const HOURS = Array.from({ length: 13 }, (_, i) => i + 8) // 8h to 20h
+  const dayColors = ['#3b82f6', '#f59e0b', '#10b981'] // blue, amber, emerald
+  const dayLabels = ['Dia 1 (23/mar)', 'Dia 2 (24/mar)', 'Dia 3 (25/mar)']
+
+  const eventTimeline = useMemo(() => {
+    return [1, 2, 3].map(day => {
+      const dayCheckins = checkins.filter(c => {
+        const ev = eventMap.get(c.event_id)
+        return ev && ev.day === day && !CANCELLED_EVENTS.has(c.event_id)
+      })
+      return HOURS.map(h => dayCheckins.filter(c => {
+        const hour = new Date(c.created_at).getHours()
+        return hour === h
+      }).length)
+    })
+  }, [checkins, eventMap])
+
+  const friendTimeline = useMemo(() => {
+    return [1, 2, 3].map(day => {
+      const dayFriends = friendCheckins.filter(f => f.day === day)
+      return HOURS.map(h => dayFriends.filter(f => {
+        const hour = new Date(f.created_at).getHours()
+        return hour === h
+      }).length)
+    })
+  }, [friendCheckins])
+
   const maxVal = Math.max(1, ...data.flatMap(d => [d.orais, d.posters, d.outros, d.amigos]))
 
   const dayLabel = (d: number) => `Dia ${d} (${22 + d}/mar)`
@@ -784,6 +812,120 @@ function ChartsTab({ checkins, friendCheckins, events }: { checkins: Checkin[]; 
             )
           })}
         </div>
+      </div>
+
+      {/* Timeline: Event checkins per hour */}
+      <TimelineChart
+        title="Timeline — Checkins de Eventos por Hora"
+        timeline={eventTimeline}
+        hours={HOURS}
+        dayColors={dayColors}
+        dayLabels={dayLabels}
+      />
+
+      {/* Timeline: Friend checkins per hour */}
+      <TimelineChart
+        title="Timeline — Checkins de Amigos por Hora"
+        timeline={friendTimeline}
+        hours={HOURS}
+        dayColors={dayColors}
+        dayLabels={dayLabels}
+      />
+    </div>
+  )
+}
+
+function TimelineChart({ title, timeline, hours, dayColors, dayLabels }: {
+  title: string
+  timeline: number[][]
+  hours: number[]
+  dayColors: string[]
+  dayLabels: string[]
+}) {
+  const maxVal = Math.max(1, ...timeline.flat())
+  const W = 600
+  const H = 250
+  const PAD = { top: 20, right: 20, bottom: 30, left: 40 }
+  const chartW = W - PAD.left - PAD.right
+  const chartH = H - PAD.top - PAD.bottom
+
+  const xStep = chartW / (hours.length - 1)
+
+  // Y-axis ticks
+  const yTicks = 5
+  const yTickVals = Array.from({ length: yTicks + 1 }, (_, i) => Math.round((maxVal / yTicks) * i))
+
+  const buildPath = (values: number[]) =>
+    values.map((v, i) => {
+      const x = PAD.left + i * xStep
+      const y = PAD.top + chartH - (v / maxVal) * chartH
+      return `${i === 0 ? 'M' : 'L'}${x},${y}`
+    }).join(' ')
+
+  return (
+    <div className="bg-white rounded-xl border p-5">
+      <h3 className="font-semibold text-gray-800 mb-4">{title}</h3>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-4 mb-3">
+        {dayLabels.map((label, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: dayColors[i] }} />
+            <span className="text-sm text-gray-600">{label}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[500px]" style={{ maxHeight: 300 }}>
+          {/* Grid lines */}
+          {yTickVals.map(v => {
+            const y = PAD.top + chartH - (v / maxVal) * chartH
+            return (
+              <g key={v}>
+                <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="#e5e7eb" strokeWidth={1} />
+                <text x={PAD.left - 6} y={y + 4} textAnchor="end" className="text-[10px]" fill="#9ca3af">{v}</text>
+              </g>
+            )
+          })}
+
+          {/* X-axis labels */}
+          {hours.map((h, i) => (
+            <text key={h} x={PAD.left + i * xStep} y={H - 6} textAnchor="middle" className="text-[10px]" fill="#9ca3af">
+              {h}h
+            </text>
+          ))}
+
+          {/* Lines */}
+          {timeline.map((values, dayIdx) => {
+            const hasData = values.some(v => v > 0)
+            if (!hasData) return null
+            return (
+              <g key={dayIdx}>
+                <path
+                  d={buildPath(values)}
+                  fill="none"
+                  stroke={dayColors[dayIdx]}
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* Dots */}
+                {values.map((v, i) => {
+                  if (v === 0) return null
+                  const x = PAD.left + i * xStep
+                  const y = PAD.top + chartH - (v / maxVal) * chartH
+                  return (
+                    <g key={i}>
+                      <circle cx={x} cy={y} r={4} fill={dayColors[dayIdx]} />
+                      <title>{dayLabels[dayIdx]} — {hours[i]}h: {v}</title>
+                    </g>
+                  )
+                })}
+              </g>
+            )
+          })}
+        </svg>
       </div>
     </div>
   )
